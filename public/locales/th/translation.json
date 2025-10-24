@@ -1,0 +1,45 @@
+{
+  "common": {
+    "welcome": "ยินดีต้อนรับเข้าสู่เว็บไซต์!",
+    "language": "ภาษาไทย",
+    "list": "รายการ",
+    "logout": "ออก",
+    "profile": "โปรไฟล์",
+    "userManager": "จัดการผู้ใช้งาน",
+    "userManager_sub": "จัดการผู้ใช้",
+    "projectStart": "เริ่มโครงการ",
+    "projectStart_sub": "เริ่มต้นโครงการ",
+    "scanTag": "สแกนแท็ก",
+    "scanTag_sub": "สแกนแท็ก",
+    "search": "ค้นหา",
+    "search_sub": "ค้นหาคำสั่งซื้อ",
+    "notifications": "การแจ้งเตือน",
+    "notifications_sub": "การเตือน"
+  },
+  "table": {
+    "prev": "ก่อนหน้า",
+    "next": "ถัดไป",
+    "noResultFound": "ไม่พบข้อมูล",
+    "customer": "ลูกค้า",
+    "team": "ทีมงาน",
+    "tagNo": "หมายเลขแท็ก",
+    "power": "กำลังไฟฟ้า",
+    "projectNo": "เลขที่โครงการ",
+    "serviceId": "รหัสบริการ",
+    "motor": "มอเตอร์",
+    "createdAt": "วันที่สร้าง"
+  },
+  "profile": {
+    "profileSetting": "การตั้งค่าโปรไฟล์",
+    "name": "ชื่อ",
+    "lastname": "นามสกุล",
+    "email": "อีเมล",
+    "phone": "เบอร์โทรศัพท์",
+    "lineId": "LINE ID",
+    "userLanguage": "ภาษาที่ใช้แสดงผล",
+    "saveChanges": "บันทึกการเปลี่ยนแปลง"
+  },
+    "calendar": {
+    "agendar": "กำหนดการ"
+  }
+}

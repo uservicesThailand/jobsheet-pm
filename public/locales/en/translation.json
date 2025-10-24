@@ -1,0 +1,46 @@
+{
+  "common": {
+    "welcome": "Welcome to my site!",
+    "language": "English",
+    "list": "list",
+    "logout": "Logout",
+    "profile": "Profile",
+    "userManager": "User Manager",
+    "userManager_sub": "Manage users",
+    "projectStart": "Project Start",
+    "projectStart_sub": "Begin project",
+    "scanTag": "Scan Tag",
+    "scanTag_sub": "Scan tag",
+    "search": "Search",
+    "search_sub": "Find order",
+    "notifications": "Notifications",
+    "notifications_sub": "Alerts"
+  },
+  "table": {
+    "prev": "Prev",
+    "next": "Next",
+    "noResultFound": "No results found",
+    "customer": "Customer",
+    "team": "Team",
+    "tagNo": "Tag No.",
+    "power": "Power",
+    "projectNo": "Project No",
+    "serviceId": "Service ID",
+    "motor": "Motor",
+    "createdAt": "Created"
+  },
+  "profile": {
+    "profileSetting": "Profile Setting",
+    "name": "Name",
+    "lastname": "Lastname",
+    "email": "Email",
+    "phone": "Phone",
+    "lineId": "LINE ID",
+    "userLanguage": "Display Language",
+    "saveChanges": "Save Changes"
+  },
+  "calendar": {
+    "agendar": "Agenda"
+
+  }
+}

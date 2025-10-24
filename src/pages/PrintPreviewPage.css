@@ -1,0 +1,28 @@
+/* ในไฟล์ global เช่น index.css หรือ layout.css */
+@media print {
+    body * {
+        visibility: hidden;
+        /* ซ่อนทุกอย่างก่อน */
+    }
+
+    #print-area,
+    #print-area * {
+        visibility: visible;
+        /* โชว์เฉพาะสิ่งที่ต้องการพิมพ์ */
+    }
+
+    #print-area {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+    }
+
+    /* ไม่ให้แสดง header, navbar, footer */
+    header,
+    nav,
+    .navbar,
+    .app-header {
+        display: none !important;
+    }
+}
