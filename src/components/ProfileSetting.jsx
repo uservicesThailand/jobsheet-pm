@@ -7,11 +7,9 @@ import {
 import { Camera, User, Phone, Mail, MessageSquareText, Languages } from 'lucide-react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
-import { useTranslation } from "react-i18next";
 
 export default function ProfileSetting() {
     const userId = sessionStorage.getItem('usvt_user_key') || 'unknow';
-    const { t, i18n } = useTranslation();
 
     const [profileImage, setProfileImage] = useState(null);
     const [formData, setFormData] = useState({
@@ -85,16 +83,6 @@ export default function ProfileSetting() {
     const handleSubmit = () => {
         axios.put(`${import.meta.env.VITE_API_HOST}/api/user/${userId}`, formData)
             .then(() => {
-                //  เปลี่ยนภาษา runtime ทันที
-                if (formData.user_language) {
-                    i18n.changeLanguage(formData.user_language);
-                    sessionStorage.setItem('usvt_lang', formData.user_language);
-                    // กระจายข่าวให้แท็บอื่น ๆ (ถ้าเปิดหลายแท็บ)
-                    window.dispatchEvent(new StorageEvent('storage', {
-                        key: 'usvt_lang',
-                        newValue: formData.user_language
-                    }));
-                }
 
                 Swal.fire({
                     icon: 'success',
@@ -118,7 +106,7 @@ export default function ProfileSetting() {
         <Box sx={{ p: 3, maxWidth: 600, mx: 'auto' }}>
             <Paper elevation={4} sx={{ p: 4, borderRadius: 4 }}>
                 <Typography variant="h5" fontWeight="bold" gutterBottom>
-                    {t("profile.profileSetting")}
+                    {("PROFILE SETTING")}
                 </Typography>
 
                 <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
@@ -149,7 +137,7 @@ export default function ProfileSetting() {
                         {/* ชื่อ-นามสกุล */}
                         <Box sx={{ display: 'flex', gap: 2 }}>
                             <TextField
-                                label={t("profile.name")}
+                                label={("NAME")}
                                 value={formData.name}
                                 onChange={handleInputChange('name')}
                                 sx={{ flex: 1 }}
@@ -166,7 +154,7 @@ export default function ProfileSetting() {
 
 
                             <TextField
-                                label={t("profile.lastname")}
+                                label={("LASTNAME")}
                                 value={formData.lastname}
                                 onChange={handleInputChange('lastname')}
                                 sx={{ flex: 1 }}
@@ -174,7 +162,7 @@ export default function ProfileSetting() {
                         </Box>
 
                         <TextField
-                            label={t("profile.email")}
+                            label={("EMAIL")}
                             value={formData.u_email}
                             onChange={handleInputChange('u_email')}
                             fullWidth
@@ -190,7 +178,7 @@ export default function ProfileSetting() {
                         />
 
                         <TextField
-                            label={t("profile.phone")}
+                            label={("PHONE")}
                             value={formData.u_tel}
                             onChange={handleInputChange('u_tel')}
                             fullWidth
@@ -206,7 +194,7 @@ export default function ProfileSetting() {
                         />
 
                         <TextField
-                            label={t("profile.lineId")}
+                            label={("LINE ID")}
                             value={formData.lineId}
                             onChange={handleInputChange('lineId')}
                             fullWidth
@@ -222,13 +210,13 @@ export default function ProfileSetting() {
                         />
                         {/* ช่องเลือกภาษา */}
 
-                        <FormControl fullWidth>
+                        {/* <FormControl fullWidth>
                             <InputLabel id="language-label">
-                                {t("profile.userLanguage")}
+                                {("profile.userLanguage")}
                             </InputLabel>
                             <Select
                                 labelId="language-label"
-                                label={t("profile.userLanguage")}
+                                label={("profile.userLanguage")}
                                 value={formData.user_language}
                                 onChange={handleInputChange('user_language')}
                             >
@@ -236,7 +224,7 @@ export default function ProfileSetting() {
                                 <MenuItem value="th">ไทย</MenuItem>
                                 <MenuItem value="en">English</MenuItem>
                             </Select>
-                        </FormControl>
+                        </FormControl> */}
                     </Stack>
 
                     <Button
@@ -253,7 +241,7 @@ export default function ProfileSetting() {
                             },
                         }}
                     >
-                        {t("profile.saveChanges")}
+                        {("SAVE")}
                     </Button>
                 </Stack>
             </Paper>

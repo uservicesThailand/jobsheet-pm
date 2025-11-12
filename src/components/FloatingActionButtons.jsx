@@ -1,45 +1,63 @@
 import React, { useState } from 'react';
-import { Printer, Download, RefreshCw, MoreVertical } from 'lucide-react';
+import { Printer, Download, RefreshCw, MoreVertical, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 
 export default function FloatingActionButtons({
-    onPrint,
-    onDownloadPDF,
-    onReload
+  onPrint,
+  onDownloadPDF,
+  onReload,
+  onZoomIn,
+  onZoomOut,
+  onResetZoom,
+  currentZoom
 }) {
-    const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false);
 
-    const actions = [
-        {
-            icon: Printer,
-            name: 'Print',
-            onClick: onPrint,
-            color: '#f59e0b',
-            delay: 0
-        },
-        /* {
-            icon: Download,
-            name: 'Download PDF',
-            onClick: onDownloadPDF,
-            color: '#f59e0b',
-            delay: 50
-        }, */
-        {
-            icon: RefreshCw,
-            name: 'Reload',
-            onClick: onReload,
-            color: '#6b7280',
-            delay: 100
-        },
-    ];
+  const actions = [
+    {
+      icon: ZoomIn,
+      name: 'Zoom In',
+      onClick: onZoomIn,
+      color: '#10b981',
+      delay: 0
+    },
+    {
+      icon: ZoomOut,
+      name: 'Zoom Out',
+      onClick: onZoomOut,
+      color: '#ef4444',
+      delay: 50
+    },
+    {
+      icon: Maximize2,
+      name: `Reset (${Math.round(currentZoom * 100)}%)`,
+      onClick: onResetZoom,
+      color: '#8b5cf6',
+      delay: 100
+    },
+    {
+      icon: Printer,
+      name: 'Print',
+      onClick: onPrint,
+      color: '#f59e0b',
+      delay: 150
+    },
+    {
+      icon: RefreshCw,
+      name: 'Reload',
+      onClick: onReload,
+      color: '#6b7280',
+      delay: 200
+    },
+  ];
 
-    const handleActionClick = (action) => {
-        action.onClick?.();
-        setOpen(false);
-    };
+  const handleActionClick = (action) => {
+    action.onClick?.();
+    // ไม่ปิดเมนู - ให้กด ... อีกครั้งถึงจะปิด
+  };
 
-    return (
-        <>
-            <style>{`
+  return (
+    <>
+      <style>{`
         @keyframes slideUp {
           from {
             opacity: 0;
@@ -151,136 +169,43 @@ export default function FloatingActionButtons({
         .action-button:active {
           transform: scale(0.95);
         }
-
-        .backdrop {
-          position: fixed;
-          inset: 0;
-          background: rgba(0, 0, 0, 0.2);
-          z-index: 999;
-          opacity: 0;
-          animation: fadeIn 0.3s forwards;
-        }
-
-        @keyframes fadeIn {
-          to {
-            opacity: 1;
-          }
-        }
-
-        .backdrop.closing {
-          animation: fadeOut 0.2s forwards;
-        }
-
-        @keyframes fadeOut {
-          to {
-            opacity: 0;
-          }
-        }
       `}</style>
 
-            {open && (
-                <div
-                    className={`backdrop ${!open ? 'closing' : ''}`}
-                    onClick={() => setOpen(false)}
-                />
-            )}
-
-            <div className="speed-dial-container">
-                {open && actions.map((action, index) => {
-                    const Icon = action.icon;
-                    return (
-                        <div
-                            key={action.name}
-                            className="action-item"
-                            style={{
-                                animationDelay: `${action.delay}ms`,
-                            }}
-                        >
-                            <span className="action-label">{action.name}</span>
-                            <button
-                                className="action-button"
-                                onClick={() => handleActionClick(action)}
-                                style={{
-                                    background: `linear-gradient(135deg, ${action.color} 0%, ${action.color}dd 100%)`,
-                                    animationDelay: `${action.delay}ms`
-                                }}
-                                title={action.name}
-                            >
-                                <Icon size={20} />
-                            </button>
-                        </div>
-                    );
-                })}
-
-                <button
-                    className={`main-fab ${open ? 'open' : ''}`}
-                    onClick={() => setOpen(!open)}
-                    aria-label="Actions menu"
-                >
-                    <MoreVertical size={24} />
-                </button>
+      <div className="speed-dial-container">
+        {open && actions.map((action, index) => {
+          const Icon = action.icon;
+          return (
+            <div
+              key={action.name}
+              className="action-item"
+              style={{
+                animationDelay: `${action.delay}ms`,
+              }}
+            >
+              <span className="action-label">{action.name}</span>
+              <button
+                className="action-button"
+                onClick={() => handleActionClick(action)}
+                style={{
+                  background: `linear-gradient(135deg, ${action.color} 0%, ${action.color}dd 100%)`,
+                  animationDelay: `${action.delay}ms`
+                }}
+                title={action.name}
+              >
+                <Icon size={20} />
+              </button>
             </div>
-        </>
-    );
-}
+          );
+        })}
 
-// ตัวอย่างการใช้งาน
-function Demo() {
-    const handlePrint = () => {
-        console.log('Print clicked');
-        alert('เรียกใช้ฟังก์ชัน Print');
-    };
-
-    const handleDownloadPDF = () => {
-        console.log('Download PDF clicked');
-        alert('เรียกใช้ฟังก์ชัน Download PDF');
-    };
-
-    const handleReload = () => {
-        console.log('Reload clicked');
-        alert('เรียกใช้ฟังก์ชัน Reload');
-    };
-
-    return (
-        <div style={{
-            minHeight: '100vh',
-            backgroundColor: '#f0f0f0',
-            padding: '20px'
-        }}>
-            <div style={{
-                maxWidth: '800px',
-                margin: '0 auto',
-                backgroundColor: 'white',
-                padding: '40px',
-                borderRadius: '8px',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-            }}>
-                <h1 style={{ marginBottom: '20px', color: '#333' }}>
-                    Floating Action Buttons Demo
-                </h1>
-                <p style={{ fontSize: '16px', color: '#666', marginBottom: '30px' }}>
-                    ลองเลื่อนหน้าและกดปุ่มมุมขวาล่างเพื่อดูเมนูขยายออกมา 🚀
-                </p>
-
-                {[...Array(20)].map((_, i) => (
-                    <p key={i} style={{
-                        marginBottom: '20px',
-                        lineHeight: '1.6',
-                        color: '#444'
-                    }}>
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                        Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-                        Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.
-                        Duis aute irure dolor in reprehenderit in voluptate velit esse cillum.
-                    </p>
-                ))}
-            </div>
-
-            <FloatingActionButtons
-                onPrint={handlePrint}
-                onDownloadPDF={handleDownloadPDF}
-                onReload={handleReload}
-            />
-        </div>
-    );
+        <button
+          className={`main-fab ${open ? 'open' : ''}`}
+          onClick={() => setOpen(!open)}
+          aria-label="Actions menu"
+        >
+          <MoreVertical size={24} />
+        </button>
+      </div>
+    </>
+  );
 }

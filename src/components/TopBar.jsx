@@ -8,26 +8,33 @@ import { LogOut, Menu as MenuIcon, CalendarCheck, ChevronDown, ChevronRight } fr
 import { useNavigate } from 'react-router-dom';
 import LoadingMechanic from './LoadingBackdrop';
 
-// หน้าเมนูหลัก (เดสก์ท็อปจะใช้ในอนาคตได้)
-const pages = ['Tags', 'Scan', 'Report', 'Setting', 'Onsite'];
-
-const scanItems = [
-    "Scan tag เปิดงานซ่อม", "Scan Report (รับงาน)", "Scan QA (รับงาน)",
-    "Scan ME (รับงาน)", "Scan MC2 (รับงาน)", "Scan PLA (รับงาน)",
-    "Scan Rewind (รับงาน)", "Scan Balance (รับงาน)", "Scan Oven (รับงาน)",
-    "Scan Color (รับงาน)", "Scan Machine (รับงาน)", "Scan CS (รับงาน)",
-    "Scan Mgr QA (รับงาน)", "Scan Mgr ME (รับงาน)"
-];
-
-const tagItems = [
-    "PROJECT START", "TAG LIST", "TAG LIST Report", "TAG LIST QA", "TAG LIST ME",
-    "TAG LIST MC2", "TAG LIST PLA", "TAG LIST CS", "TAG LIST Rewind",
-    "TAG LIST Balance", "TAG LIST Oven", "TAG LIST Color", "TAG LIST Machine",
-    "Job Approved QA", "Job Approved ME", "TAG LIST STORE"
-];
-const apiHost = import.meta.env.VITE_API_HOST;
+// ธีมสีบริษัท - Orange & Navy Blue
+const theme = {
+    primary: {
+        main: '#FF6B35',
+        light: '#FF8C61',
+        lighter: '#FFE5DC',
+        dark: '#E55A2B',
+    },
+    secondary: {
+        main: '#1A3A52',
+        light: '#2E5371',
+        lighter: '#E8EEF2',
+        dark: '#0F2838',
+    },
+    accent: {
+        orange: '#FFA726',
+        blue: '#3A5A7A',
+    },
+    neutral: {
+        bg: '#F8FAFB',
+        border: '#E0E7ED',
+    }
+};
 
 function ResponsiveAppBar() {
+    const navigate = useNavigate();
+
     const [loggingOut, setLoggingOut] = React.useState(false);
     const [drawerOpen, setDrawerOpen] = React.useState(false);
     const [scanOpen, setScanOpen] = React.useState(false);
@@ -40,7 +47,7 @@ function ResponsiveAppBar() {
     const handleLogout = async () => {
         setLoggingOut(true);
         try {
-            await fetch(`${apiHost}/api/logout`, {
+            await fetch(`${import.meta.env.VITE_API_HOST}/api/logout`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ user_key: userKey }),
@@ -56,9 +63,26 @@ function ResponsiveAppBar() {
     const toggleDrawer = (open) => () => setDrawerOpen(open);
 
     const DrawerContent = (
-        <Box sx={{ width: 300 }} role="presentation" onKeyDown={(e) => e.key === 'Escape' && setDrawerOpen(false)}>
+        <Box
+            sx={{
+                width: 300,
+                height: '100%',
+                bgcolor: theme.neutral.bg,
+            }}
+            role="presentation"
+            onKeyDown={(e) => e.key === 'Escape' && setDrawerOpen(false)}
+        >
             {/* ส่วนหัวใน Drawer */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, p: 2 }}>
+            <Box
+                sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1.5,
+                    p: 2.5,
+                    background: `linear-gradient(135deg, ${theme.secondary.main} 0%, ${theme.secondary.light} 100%)`,
+                    boxShadow: '0 4px 12px rgba(26, 58, 82, 0.15)',
+                }}
+            >
                 <Avatar
                     alt={userName}
                     src={
@@ -66,49 +90,114 @@ function ResponsiveAppBar() {
                             ? `${import.meta.env.VITE_API_HOST}/img/${sessionStorage.getItem('usvt_photo')}`
                             : '/logo2.png'
                     }
-                    sx={{ width: 44, height: 44 }}
+                    sx={{
+                        width: 48,
+                        height: 48,
+                        border: `3px solid ${theme.primary.main}`,
+                        boxShadow: '0 2px 8px rgba(255, 107, 53, 0.3)',
+                    }}
                 />
                 <Box>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>{userName}</Typography>
-                    <Typography variant="body2" color="text.secondary">{userBranch}</Typography>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'white' }}>
+                        {userName}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: theme.primary.lighter }}>
+                        {userBranch}
+                    </Typography>
                 </Box>
             </Box>
-            <Divider />
+            <Divider sx={{ borderColor: theme.neutral.border }} />
 
             {/* เมนูเร็ว */}
-            {/* <List>
-                <ListItemButton onClick={() => { navigate('/fullCalendar'); setDrawerOpen(false); }}>
-                    <CalendarCheck size={18} style={{ marginRight: 12 }} />
-                    <ListItemText primary={('calendar')} />
+            <List sx={{ px: 1, py: 1.5 }}>
+                <ListItemButton
+                    onClick={() => { navigate('/fullCalendar'); setDrawerOpen(false); }}
+                    sx={{
+                        borderRadius: 2,
+                        mb: 0.5,
+                        transition: 'all 0.2s',
+                        '&:hover': {
+                            bgcolor: theme.primary.lighter,
+                            color: theme.primary.dark,
+                        }
+                    }}
+                >
+                    <CalendarCheck size={20} color={theme.primary.main} style={{ marginRight: 12 }} />
+                    <ListItemText
+                        primary={('ตารางงาน')}
+                        primaryTypographyProps={{ fontWeight: 500 }}
+                    />
                 </ListItemButton>
-                <ListItemButton onClick={() => { navigate('/profile-setting'); setDrawerOpen(false); }}>
-                    <Avatar sx={{ width: 18, height: 18, mr: 1.5 }} />
-                    <ListItemText primary={('common.profile')} />
+                <ListItemButton
+                    onClick={() => { navigate('/profile-setting'); setDrawerOpen(false); }}
+                    sx={{
+                        borderRadius: 2,
+                        transition: 'all 0.2s',
+                        '&:hover': {
+                            bgcolor: theme.primary.lighter,
+                            color: theme.primary.dark,
+                        }
+                    }}
+                >
+                    <Avatar sx={{ width: 20, height: 20, mr: 1.5 }} />
+                    <ListItemText
+                        primary={('ตั้งค่าโปรไฟล์')}
+                        primaryTypographyProps={{ fontWeight: 500 }}
+                    />
                 </ListItemButton>
-            </List> */}
+            </List>
 
-            {/* <Divider sx={{ my: 1 }} /> */}
 
             {/* เมนูหมวด Scan */}
-            {/*  <List>
-                <ListItemButton onClick={() => setScanOpen(v => !v)}>
-                    {scanOpen ? <ChevronDown size={18} style={{ marginRight: 12 }} /> : <ChevronRight size={18} style={{ marginRight: 12 }} />}
-                    <ListItemText primary="เมนู Scan" />
+            {/*    <List sx={{ px: 1 }}>
+                <ListItemButton
+                    onClick={() => setScanOpen(v => !v)}
+                    sx={{
+                        borderRadius: 2,
+                        bgcolor: scanOpen ? theme.secondary.lighter : 'transparent',
+                        '&:hover': {
+                            bgcolor: theme.secondary.lighter,
+                        }
+                    }}
+                >
+                    {scanOpen
+                        ? <ChevronDown size={20} color={theme.secondary.main} style={{ marginRight: 12 }} />
+                        : <ChevronRight size={20} color={theme.secondary.main} style={{ marginRight: 12 }} />
+                    }
+                    <ListItemText
+                        primary="เมนู Scan"
+                        primaryTypographyProps={{
+                            fontWeight: 600,
+                            color: theme.secondary.main
+                        }}
+                    />
                 </ListItemButton>
                 <Collapse in={scanOpen} timeout="auto" unmountOnExit>
                     <List component="div" disablePadding>
                         {scanItems.map((text, idx) => (
                             <ListItemButton
                                 key={text}
-                                sx={{ pl: 5 }}
+                                sx={{
+                                    pl: 5,
+                                    borderRadius: 2,
+                                    transition: 'all 0.2s',
+                                    '&:hover': {
+                                        bgcolor: theme.primary.lighter,
+                                        transform: 'translateX(4px)',
+                                    }
+                                }}
                                 onClick={() => {
-                                    // TODO: ปรับเส้นทางให้ตรงกับระบบของคุณ
-                                    // ตัวอย่าง: navigate(`/scan/${idx}`);
                                     console.log('goto scan item:', idx, text);
                                     setDrawerOpen(false);
                                 }}
                             >
-                                <ListItemText primary={text} />
+                                <ListItemText
+                                    primary={text}
+                                    primaryTypographyProps={{
+                                        fontSize: '0.9rem',
+                                        color: theme.secondary.light,
+                                    }}
+                                />
                             </ListItemButton>
                         ))}
                     </List>
@@ -116,44 +205,84 @@ function ResponsiveAppBar() {
             </List> */}
 
             {/* เมนูหมวด Tag */}
-            {/*  <List>
-                <ListItemButton onClick={() => setTagOpen(v => !v)}>
-                    {tagOpen ? <ChevronDown size={18} style={{ marginRight: 12 }} /> : <ChevronRight size={18} style={{ marginRight: 12 }} />}
-                    <ListItemText primary="เมนู Tag" />
+            {/*      <List sx={{ px: 1 }}>
+                <ListItemButton
+                    onClick={() => setTagOpen(v => !v)}
+                    sx={{
+                        borderRadius: 2,
+                        bgcolor: tagOpen ? theme.secondary.lighter : 'transparent',
+                        '&:hover': {
+                            bgcolor: theme.secondary.lighter,
+                        }
+                    }}
+                >
+                    {tagOpen
+                        ? <ChevronDown size={20} color={theme.secondary.main} style={{ marginRight: 12 }} />
+                        : <ChevronRight size={20} color={theme.secondary.main} style={{ marginRight: 12 }} />
+                    }
+                    <ListItemText
+                        primary="เมนู Tag"
+                        primaryTypographyProps={{
+                            fontWeight: 600,
+                            color: theme.secondary.main
+                        }}
+                    />
                 </ListItemButton>
                 <Collapse in={tagOpen} timeout="auto" unmountOnExit>
                     <List component="div" disablePadding>
                         {tagItems.map((text, idx) => (
                             <ListItemButton
                                 key={text}
-                                sx={{ pl: 5 }}
+                                sx={{
+                                    pl: 5,
+                                    borderRadius: 2,
+                                    transition: 'all 0.2s',
+                                    '&:hover': {
+                                        bgcolor: theme.primary.lighter,
+                                        transform: 'translateX(4px)',
+                                    }
+                                }}
                                 onClick={() => {
-                                    // TODO: ปรับเส้นทางให้ตรงกับระบบของคุณ
-                                    // ตัวอย่าง: navigate(`/tags/${idx}`);
                                     console.log('goto tag item:', idx, text);
                                     setDrawerOpen(false);
                                 }}
                             >
-                                <ListItemText primary={text} />
+                                <ListItemText
+                                    primary={text}
+                                    primaryTypographyProps={{
+                                        fontSize: '0.9rem',
+                                        color: theme.secondary.light,
+                                    }}
+                                />
                             </ListItemButton>
                         ))}
                     </List>
                 </Collapse>
             </List> */}
 
-            {/*  <Divider sx={{ my: 1 }} /> */}
+            <Divider sx={{ my: 1.5, borderColor: theme.neutral.border }} />
 
-            {/* ปุ่มออกระบบใน Drawer (สำหรับมือถือ) */}
+            {/* ปุ่มออกระบบใน Drawer */}
             <Box sx={{ p: 2 }}>
                 <Button
                     fullWidth
-                    variant="outlined"
-                    color="warning"
+                    variant="contained"
                     startIcon={<LogOut size={18} />}
                     onClick={handleLogout}
-                    sx={{ textTransform: 'none', borderRadius: 2 }}
+                    sx={{
+                        textTransform: 'none',
+                        borderRadius: 2,
+                        bgcolor: theme.primary.main,
+                        color: 'white',
+                        fontWeight: 600,
+                        boxShadow: '0 2px 8px rgba(255, 107, 53, 0.3)',
+                        '&:hover': {
+                            bgcolor: theme.primary.dark,
+                            boxShadow: '0 4px 12px rgba(255, 107, 53, 0.4)',
+                        }
+                    }}
                 >
-                    {('logout')}
+                    {('ออกระบบ')}
                 </Button>
             </Box>
         </Box>
@@ -164,18 +293,26 @@ function ResponsiveAppBar() {
             <AppBar
                 position="sticky"
                 sx={{
-                    backgroundColor: 'white',
-                    boxShadow: '0px 2px 5px rgba(0, 0, 0, 0.3)',
+                    bgcolor: 'white', // เปลี่ยนเป็นสีขาว
+                    boxShadow: '0px 4px 12px rgba(26, 58, 82, 0.15)',
+                    borderBottom: `3px solid ${theme.primary.main}`, // เพิ่มขอบส้มด้านล่าง
                     zIndex: 1100,
                 }}
             >
                 <Container maxWidth="xl">
                     <Toolbar disableGutters sx={{ width: '100%', gap: 1 }}>
-                        {/* Hamburger: แสดงเฉพาะมือถือ */}
+                        {/* Hamburger */}
                         <IconButton
                             edge="start"
                             onClick={toggleDrawer(true)}
-                            sx={{ display: { xs: 'inline-flex', md: 'none' }, mr: 1 }}
+                            sx={{
+                                display: { xs: 'inline-flex', md: 'none' },
+                                mr: 1,
+                                color: theme.secondary.main, // เปลี่ยนเป็นสีกรม
+                                '&:hover': {
+                                    bgcolor: theme.primary.lighter,
+                                }
+                            }}
                             aria-label="open menu"
                         >
                             <MenuIcon size={22} />
@@ -189,27 +326,39 @@ function ResponsiveAppBar() {
                                 alignItems: 'center',
                                 cursor: 'pointer',
                                 mr: 2,
+                                transition: 'transform 0.2s',
+                                '&:hover': {
+                                    transform: 'scale(1.05)',
+                                }
                             }}
                         >
-                            <img src="/img/U-LOGO.png" alt="Logo" style={{ height: 36 }} />
+                            <img src="/img/U-LOGO.png" alt="Logo" style={{ height: 40 }} />
                         </Box>
 
-                        {/* กล่องกลางดันขวา */}
+
                         <Box sx={{ flexGrow: 1 }} />
 
-                        {/* โปรไฟล์ + ปุ่มต่างๆ: เดสก์ท็อปแสดงเต็ม, มือถือซ่อน (ไปอยู่ใน Drawer) */}
-                        <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 1 }}>
-                            <Tooltip title="ดูโปรไฟล์">
+                        {/* Desktop Menu */}
+                        <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 1.5 }}>
+                            <Tooltip title="ดูโปรไฟล์" arrow>
                                 <Box
+                                    onClick={() => navigate('/profile-setting')}
                                     sx={{
                                         display: 'flex',
                                         alignItems: 'center',
                                         cursor: 'pointer',
-                                        gap: 1,
-                                        px: 1,
-                                        py: 0.5,
+                                        gap: 1.5,
+                                        px: 1.5,
+                                        py: 1,
                                         borderRadius: 2,
-                                        '&:hover': { backgroundColor: '#f0f0f0' },
+                                        border: `1px solid ${theme.neutral.border}`,
+                                        transition: 'all 0.2s',
+                                        '&:hover': {
+                                            bgcolor: theme.primary.lighter,
+                                            borderColor: theme.primary.main,
+                                            transform: 'translateY(-2px)',
+                                            boxShadow: '0 4px 12px rgba(255, 107, 53, 0.15)',
+                                        },
                                     }}
                                 >
                                     <Avatar
@@ -219,48 +368,97 @@ function ResponsiveAppBar() {
                                                 ? `${import.meta.env.VITE_API_HOST}/img/${sessionStorage.getItem('usvt_photo')}`
                                                 : '/logo2.png'
                                         }
-                                        sx={{ width: 40, height: 40 }}
+                                        sx={{
+                                            width: 40,
+                                            height: 40,
+                                            border: `2px solid ${theme.primary.main}`,
+                                        }}
                                     />
-                                    <Box sx={{ display: { lg: 'block', md: 'none' } }} />
                                     <Box sx={{ display: { md: 'block', lg: 'block' } }}>
-                                        <Typography variant="subtitle2" sx={{ fontWeight: 600, color: 'text.primary' }}>
+                                        <Typography variant="subtitle2" sx={{ fontWeight: 600, color: theme.secondary.main }}>
                                             {userName}
                                         </Typography>
-                                        <Typography variant="body2" sx={{ fontWeight: 300, color: 'text.secondary' }}>
+                                        <Typography variant="body2" sx={{ fontWeight: 400, color: theme.secondary.light }}>
                                             {userBranch}
                                         </Typography>
                                     </Box>
                                 </Box>
                             </Tooltip>
 
-                            {/* <Tooltip title="ดูรายการที่ต้องทำ">
+                            <Tooltip title="ดูรายการที่ต้องทำ" arrow>
                                 <Button
                                     variant="outlined"
-                                    color="info"
                                     onClick={() => navigate('/fullCalendar')}
                                     startIcon={<CalendarCheck size={18} />}
-                                    sx={{ textTransform: 'none', borderRadius: 2 }}
+                                    sx={{
+                                        textTransform: 'none',
+                                        borderRadius: 2,
+                                        borderColor: theme.secondary.main,
+                                        color: theme.secondary.main,
+                                        fontWeight: 500,
+                                        '&:hover': {
+                                            bgcolor: theme.secondary.lighter,
+                                            borderColor: theme.secondary.main,
+                                        }
+                                    }}
                                 >
-                                    {('calendar')}
+                                    {('ตารางงาน')}
                                 </Button>
                             </Tooltip>
- */}
+
                             <Button
-                                variant="outlined"
-                                color="warning"
+                                variant="contained"
                                 onClick={handleLogout}
                                 startIcon={<LogOut size={18} />}
-                                sx={{ ml: 1, textTransform: 'none', fontWeight: 500, borderRadius: 2 }}
+                                sx={{
+                                    ml: 1,
+                                    textTransform: 'none',
+                                    fontWeight: 600,
+                                    borderRadius: 2,
+                                    bgcolor: theme.primary.main,
+                                    color: 'white',
+                                    boxShadow: '0 2px 8px rgba(255, 107, 53, 0.3)',
+                                    '&:hover': {
+                                        bgcolor: theme.primary.dark,
+                                        boxShadow: '0 4px 12px rgba(255, 107, 53, 0.4)',
+                                    }
+                                }}
                             >
-                                {('logout')}
+                                {('ออกระบบ')}
                             </Button>
                         </Box>
 
-                        {/* มุมขวา: มือถือแสดงเฉพาะไอคอนแจ้งเตือน + อวาตาร์เล็ก */}
+                        {/* Mobile Menu */}
                         <Box sx={{ display: { xs: 'flex', md: 'none' }, alignItems: 'center', gap: 1, ml: 'auto' }}>
-
-                            <Tooltip title={('common.profile')}>
-                                <IconButton onClick={() => navigate('/profile-setting')}>
+                            <Tooltip title="ดูรายการที่ต้องทำ" arrow>
+                                <Button
+                                    variant="outlined"
+                                    onClick={() => navigate('/fullCalendar')}
+                                    startIcon={<CalendarCheck size={18} />}
+                                    sx={{
+                                        textTransform: 'none',
+                                        borderRadius: 2,
+                                        borderColor: theme.secondary.main,
+                                        color: theme.secondary.main,
+                                        fontWeight: 500,
+                                        '&:hover': {
+                                            bgcolor: theme.secondary.lighter,
+                                            borderColor: theme.secondary.main,
+                                        }
+                                    }}
+                                >
+                                    {('ตารางงาน')}
+                                </Button>
+                            </Tooltip>
+                            <Tooltip title={('ดูโปรไฟล์')} arrow>
+                                <IconButton
+                                    onClick={() => navigate('/profile-setting')}
+                                    sx={{
+                                        '&:hover': {
+                                            bgcolor: theme.primary.lighter,
+                                        }
+                                    }}
+                                >
                                     <Avatar
                                         alt={userName}
                                         src={
@@ -268,7 +466,11 @@ function ResponsiveAppBar() {
                                                 ? `${import.meta.env.VITE_API_HOST}/img/${sessionStorage.getItem('usvt_photo')}`
                                                 : '/logo2.png'
                                         }
-                                        sx={{ width: 32, height: 32 }}
+                                        sx={{
+                                            width: 34,
+                                            height: 34,
+                                            border: `2px solid ${theme.primary.main}`,
+                                        }}
                                     />
                                 </IconButton>
                             </Tooltip>
@@ -283,7 +485,12 @@ function ResponsiveAppBar() {
                 anchor="left"
                 open={drawerOpen}
                 onClose={toggleDrawer(false)}
-                ModalProps={{ keepMounted: true }} // ช่วยเรื่อง performance บนมือถือ
+                ModalProps={{ keepMounted: true }}
+                sx={{
+                    '& .MuiDrawer-paper': {
+                        boxShadow: '4px 0 20px rgba(26, 58, 82, 0.15)',
+                    }
+                }}
             >
                 {DrawerContent}
             </Drawer>

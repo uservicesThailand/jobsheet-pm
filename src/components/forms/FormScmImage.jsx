@@ -28,7 +28,12 @@ import {
     Image as ImageIcon,
     Save,
     Restore,
-    RestoreFromTrash
+    RestoreFromTrash,
+    CameraAlt,
+    Close,
+    PhotoCamera,
+    FlipCameraAndroid,
+    ZoomIn, NavigateBefore, NavigateNext
 } from '@mui/icons-material';
 
 const apiHost = import.meta.env.VITE_API_HOST;
@@ -45,15 +50,97 @@ const ScmImage = ({ data, inspNo, inspSV, userKey, customerName, customerNo }) =
     const [deleteDialog, setDeleteDialog] = useState({ open: false, index: null });
     const [restoreDialog, setRestoreDialog] = useState({ open: false, image: null });
     const [restoreAllDialog, setRestoreAllDialog] = useState(false);
+
     // ======= เพิ่ม State ใหม่สำหรับรูปปก (เพิ่มหลังจาก state เดิม) =======
     const [headerImage, setHeaderImage] = useState(null);
     const [headerFile, setHeaderFile] = useState(null);
     const [uploadingHeader, setUploadingHeader] = useState(false);
     const [deleteHeaderDialog, setDeleteHeaderDialog] = useState(false);
+
     /* Description รูปภาพ */
     const [imageDescriptions, setImageDescriptions] = useState({});
     const [editingDescription, setEditingDescription] = useState({});
     const [savedDescriptions, setSavedDescriptions] = useState({});
+
+    // ======= เพิ่ม State สำหรับ Camera =======
+    const [cameraOpen, setCameraOpen] = useState(false);
+    const [cameraStream, setCameraStream] = useState(null);
+    const [capturedImage, setCapturedImage] = useState(null);
+    const [facingMode, setFacingMode] = useState('environment'); // 'user' = หน้า, 'environment' = หลัง
+    const [cameraMode, setCameraMode] = useState('gallery'); // 'gallery' or 'header'
+    const [cameraSupported, setCameraSupported] = useState(true);
+    const videoRef = React.useRef(null);
+    const canvasRef = React.useRef(null);
+    // ======= เพิ่ม State สำหรับ Image Viewer =======
+    const [imageViewer, setImageViewer] = useState({
+        open: false,
+        currentIndex: 0,
+        images: []
+    });
+
+    // ======= ฟังก์ชันเปิด Image Viewer =======
+    const openImageViewer = (index, imageList) => {
+        setImageViewer({
+            open: true,
+            currentIndex: index,
+            images: imageList
+        });
+    };
+
+    const closeImageViewer = () => {
+        setImageViewer({
+            open: false,
+            currentIndex: 0,
+            images: []
+        });
+    };
+
+    const goToPrevious = () => {
+        setImageViewer(prev => ({
+            ...prev,
+            currentIndex: prev.currentIndex > 0 ? prev.currentIndex - 1 : prev.images.length - 1
+        }));
+    };
+
+    const goToNext = () => {
+        setImageViewer(prev => ({
+            ...prev,
+            currentIndex: prev.currentIndex < prev.images.length - 1 ? prev.currentIndex + 1 : 0
+        }));
+    };
+
+    // ======= Handle Keyboard Navigation =======
+    React.useEffect(() => {
+        const handleKeyPress = (e) => {
+            if (!imageViewer.open) return;
+
+            if (e.key === 'ArrowLeft') {
+                goToPrevious();
+            } else if (e.key === 'ArrowRight') {
+                goToNext();
+            } else if (e.key === 'Escape') {
+                closeImageViewer();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyPress);
+        return () => window.removeEventListener('keydown', handleKeyPress);
+    }, [imageViewer.open]);
+
+    // ======= ตรวจสอบว่า Browser รองรับกล้องหรือไม่ =======
+    React.useEffect(() => {
+        const checkCameraSupport = () => {
+            const isSupported = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+            setCameraSupported(isSupported);
+
+            if (!isSupported) {
+                console.warn('Camera API not supported');
+            }
+        };
+
+        checkCameraSupport();
+    }, []);
+
     // ======= แก้ไข useEffect เดิม =======
     React.useEffect(() => {
         if (data && Array.isArray(data)) {
@@ -92,6 +179,16 @@ const ScmImage = ({ data, inspNo, inspSV, userKey, customerName, customerNo }) =
             setSavedDescriptions(saved); // เพิ่มบรรทัดนี้
         }
     }, [data]);
+
+    // ======= Cleanup camera stream when component unmounts =======
+    React.useEffect(() => {
+        return () => {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+            }
+        };
+    }, [cameraStream]);
+
     /* เพิ่มฟังก์ชันจัดการ description (2 ฟังก์ชัน) */
     const handleDescriptionChange = (imageId, value) => {
         setImageDescriptions(prev => ({
@@ -128,8 +225,195 @@ const ScmImage = ({ data, inspNo, inspSV, userKey, customerName, customerNo }) =
             showAlert('error', error.message || 'เกิดข้อผิดพลาดในการบันทึก description');
         }
     };
+
+    // ======= ฟังก์ชันสำหรับ Camera =======
+    const openCamera = async (mode = 'gallery') => {
+        setCameraMode(mode);
+
+        // ตรวจสอบว่า Browser รองรับ Camera API หรือไม่
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            showAlert('error', '⚠️ Browser ของคุณไม่รองรับการใช้กล้อง หรือกรุณาใช้ HTTPS');
+            return;
+        }
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: facingMode,
+                    width: { ideal: 1920 },
+                    height: { ideal: 1080 }
+                },
+                audio: false
+            });
+            setCameraStream(stream);
+            setCameraOpen(true);
+
+            // รอให้ video element พร้อม
+            setTimeout(() => {
+                if (videoRef.current) {
+                    videoRef.current.srcObject = stream;
+                }
+            }, 100);
+        } catch (error) {
+            console.error('Camera error:', error);
+
+            let errorMessage = 'ไม่สามารถเปิดกล้องได้';
+
+            if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                errorMessage = '🚫 กรุณาอนุญาตให้เข้าถึงกล้องในการตั้งค่า Browser';
+            } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+                errorMessage = '📷 ไม่พบกล้องในอุปกรณ์ของคุณ';
+            } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+                errorMessage = '⚠️ กล้องกำลังถูกใช้งานโดยแอปอื่น';
+            } else if (error.name === 'OverconstrainedError') {
+                errorMessage = '⚙️ การตั้งค่ากล้องไม่รองรับ';
+            } else if (error.name === 'SecurityError') {
+                errorMessage = '🔒 กรุณาใช้ HTTPS หรือ localhost';
+            }
+
+            showAlert('error', errorMessage);
+        }
+    };
+
+    const closeCamera = () => {
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+            setCameraStream(null);
+        }
+        setCameraOpen(false);
+        setCapturedImage(null);
+    };
+
+    const switchCamera = async () => {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            showAlert('error', 'Browser ไม่รองรับการสลับกล้อง');
+            return;
+        }
+
+        const newFacingMode = facingMode === 'user' ? 'environment' : 'user';
+        setFacingMode(newFacingMode);
+
+        // หยุด stream เดิม
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+        }
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: newFacingMode,
+                    width: { ideal: 1920 },
+                    height: { ideal: 1080 }
+                },
+                audio: false
+            });
+            setCameraStream(stream);
+            if (videoRef.current) {
+                videoRef.current.srcObject = stream;
+            }
+        } catch (error) {
+            console.error('Switch camera error:', error);
+            showAlert('error', 'ไม่สามารถสลับกล้องได้ - อาจมีเพียงกล้องเดียวในอุปกรณ์');
+
+            // พยายามเปิดกล้องเดิมคืน
+            setFacingMode(facingMode === 'user' ? 'environment' : 'user');
+        }
+    };
+
+    const capturePhoto = async () => {
+        if (videoRef.current && canvasRef.current) {
+            const video = videoRef.current;
+            const canvas = canvasRef.current;
+
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0);
+
+            canvas.toBlob(async (blob) => {
+                // สร้าง File object จาก Blob
+                const file = new File([blob], `camera-${Date.now()}.jpg`, { type: 'image/jpeg' });
+
+                // แก้ไข orientation
+                const fixedFile = await fixImageOrientation(file);
+                const url = URL.createObjectURL(fixedFile);
+
+                setCapturedImage(url);
+
+                if (cameraMode === 'header') {
+                    setHeaderFile(fixedFile);
+                    setHeaderImage({
+                        url: url,
+                        uploaded: false
+                    });
+                } else {
+                    // ตรวจสอบจำนวนรูปสูงสุด
+                    if (previewImages.length >= MAX_IMAGES) {
+                        showAlert('error', `สามารถอัพโหลดได้สูงสุด ${MAX_IMAGES} รูป`);
+                        return;
+                    }
+
+                    const newPreview = {
+                        url: url,
+                        file: fixedFile,
+                        uploaded: false
+                    };
+
+                    setPreviewImages(prev => [...prev, newPreview]);
+                    setSelectedFiles(prev => [...prev, fixedFile]);
+                }
+
+                showAlert('success', 'ถ่ายรูปสำเร็จ!');
+                closeCamera();
+            }, 'image/jpeg', 0.9);
+        }
+    };
+
+    const retakePhoto = () => {
+        setCapturedImage(null);
+    };
+
+    // ======= ฟังก์ชันแก้ไข EXIF Orientation =======
+    const fixImageOrientation = async (file) => {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+
+            reader.onload = (e) => {
+                const img = new Image();
+
+                img.onload = () => {
+                    // สร้าง canvas ตามขนาดจริงของรูป
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+
+                    // ตั้งค่าขนาด canvas ตามรูปต้นฉบับ
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+
+                    // วาดรูปลง canvas (จะแก้ orientation อัตโนมัติ)
+                    ctx.drawImage(img, 0, 0);
+
+                    // แปลง canvas เป็น Blob
+                    canvas.toBlob((blob) => {
+                        // สร้าง File ใหม่จาก Blob
+                        const newFile = new File([blob], file.name, {
+                            type: file.type,
+                            lastModified: Date.now()
+                        });
+                        resolve(newFile);
+                    }, file.type, 0.95); // คุณภาพ 95%
+                };
+
+                img.src = e.target.result;
+            };
+
+            reader.readAsDataURL(file);
+        });
+    };
+
     // ======= เพิ่มฟังก์ชันใหม่สำหรับรูปปก (เพิ่มก่อน handleUploadAndSave) =======
-    const handleHeaderFileSelect = (e) => {
+    const handleHeaderFileSelect = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
@@ -143,9 +427,12 @@ const ScmImage = ({ data, inspNo, inspSV, userKey, customerName, customerNo }) =
             return;
         }
 
-        setHeaderFile(file);
+        // แก้ไข orientation ก่อนแสดงและบันทึก
+        const fixedFile = await fixImageOrientation(file);
+
+        setHeaderFile(fixedFile);
         setHeaderImage({
-            url: URL.createObjectURL(file),
+            url: URL.createObjectURL(fixedFile),
             uploaded: false
         });
         showAlert('success', 'เลือกรูปปกเรียบร้อยแล้ว');
@@ -267,7 +554,7 @@ const ScmImage = ({ data, inspNo, inspSV, userKey, customerName, customerNo }) =
         setTimeout(() => setAlert({ show: false, type: '', message: '' }), 4000);
     };
 
-    const handleFileSelect = (e) => {
+    const handleFileSelect = async (e) => {
         const files = Array.from(e.target.files);
         const totalImages = previewImages.length + files.length;
 
@@ -288,7 +575,9 @@ const ScmImage = ({ data, inspNo, inspSV, userKey, customerName, customerNo }) =
                 continue;
             }
 
-            validFiles.push(file);
+            // แก้ไข orientation สำหรับแต่ละไฟล์
+            const fixedFile = await fixImageOrientation(file);
+            validFiles.push(fixedFile);
         }
 
         if (validFiles.length === 0) return;
@@ -513,48 +802,61 @@ const ScmImage = ({ data, inspNo, inspSV, userKey, customerName, customerNo }) =
 
     return (
         <Container maxWidth="lg" sx={{ py: 4 }}>
-            {/* ======= เพิ่มส่วนนี้หลังจาก <Paper elevation={3}> =======*/}
-            {/* ส่วนรูปปก */}
+            {/* ======= ส่วนรูปปก =======*/}
             <Box sx={{ mb: 4, p: 3, bgcolor: '#f5f5f5', borderRadius: 2 }}>
                 <Typography variant="h5" component="h2" fontWeight="bold" gutterBottom>
                     รูปปกเอกสาร
                 </Typography>
 
-                <Grid container spacing={3} alignItems="center">
+                <Grid container spacing={3} alignItems="flex-start">
                     <Grid size={{ xs: 12, md: 6 }}>
                         {headerImage ? (
                             <Card sx={{
                                 position: 'relative',
-                                aspectRatio: '1/1',
-                                overflow: 'hidden'
+                                overflow: 'hidden',
+                                cursor: 'pointer'
                             }}>
                                 <Box
                                     sx={{
-                                        position: 'absolute',
-                                        top: 0,
-                                        left: 0,
-                                        width: '100%',
-                                        height: '100%',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        bgcolor: 'white'
+                                        bgcolor: 'white',
+                                        minHeight: '200px',
+                                        position: 'relative'
                                     }}
                                 >
                                     <img
                                         src={headerImage.url}
                                         alt="รูปปก"
                                         style={{
-                                            maxWidth: '100%',
-                                            maxHeight: '100%',
-                                            width: 'auto',
+                                            width: '100%',
                                             height: 'auto',
                                             display: 'block'
                                         }}
                                     />
+                                    {/* เพิ่ม Zoom Icon */}
+                                    {/* <Box
+                                        sx={{
+                                            position: 'absolute',
+                                            bottom: 8,
+                                            right: 8,
+                                            bgcolor: 'rgba(0,0,0,0.6)',
+                                            borderRadius: '50%',
+                                            p: 0.5,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}
+                                    >
+                                        <ZoomIn sx={{ color: 'white', fontSize: 20 }} />
+                                    </Box> */}
                                 </Box>
                                 <IconButton
-                                    onClick={openDeleteHeaderDialog}
+                                    onClick={(e) => {
+                                        e.stopPropagation(); // ป้องกันไม่ให้เปิด viewer
+                                        openDeleteHeaderDialog;
+                                    }}
                                     sx={{
                                         position: 'absolute',
                                         top: 8,
@@ -577,7 +879,7 @@ const ScmImage = ({ data, inspNo, inspSV, userKey, customerName, customerNo }) =
                             </Card>
                         ) : (
                             <Box sx={{
-                                aspectRatio: '1/1',
+                                minHeight: '200px',
                                 display: 'flex',
                                 flexDirection: 'column',
                                 alignItems: 'center',
@@ -612,6 +914,19 @@ const ScmImage = ({ data, inspNo, inspSV, userKey, customerName, customerNo }) =
                                 />
                             </Button>
 
+                            {cameraSupported && (
+                                <Button
+                                    variant="outlined"
+                                    color="secondary"
+                                    startIcon={<CameraAlt />}
+                                    onClick={() => openCamera('header')}
+                                    disabled={uploadingHeader || headerImage}
+                                    fullWidth
+                                >
+                                    ถ่ายรูปปก
+                                </Button>
+                            )}
+
                             <Button
                                 variant="contained"
                                 color="primary"
@@ -625,15 +940,13 @@ const ScmImage = ({ data, inspNo, inspSV, userKey, customerName, customerNo }) =
 
                             <Typography variant="caption" color="text.secondary">
                                 💡 รองรับไฟล์ JPEG, PNG, WebP ขนาดไม่เกิน 10MB
+                                {!cameraSupported && <><br />⚠️ Browser ไม่รองรับกล้อง (ต้องใช้ HTTPS)</>}
                             </Typography>
                         </Stack>
                     </Grid>
                 </Grid>
-
                 {uploadingHeader && <LinearProgress sx={{ mt: 2 }} />}
             </Box>
-
-            {/* ======= เพิ่ม Dialog สำหรับลบรูปปก (ก่อนปิด </Paper>) =======*/}
 
             {/* Delete Header Dialog */}
             <Dialog open={deleteHeaderDialog} onClose={closeDeleteHeaderDialog}>
@@ -653,39 +966,50 @@ const ScmImage = ({ data, inspNo, inspSV, userKey, customerName, customerNo }) =
                 </DialogActions>
             </Dialog>
 
-
-
             <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
                 <Typography variant="h4" component="h1" fontWeight="bold">
                     จัดการรูปภาพ
                 </Typography>
                 {activeTab === 0 && (
-                    <Stack direction="row" spacing={2}>
-                        <Button
-                            variant="outlined"
-                            component="label"
-                            startIcon={<CloudUpload />}
-                            disabled={previewImages.length >= MAX_IMAGES || uploading}
-                        >
-                            เลือกรูปภาพ
-                            <input
-                                type="file"
-                                accept="image/jpeg,image/jpg,image/png,image/webp"
-                                multiple
-                                hidden
-                                onChange={handleFileSelect}
-                            />
-                        </Button>
-                        <Button
-                            variant="contained"
-                            color="primary"
-                            startIcon={<Save />}
-                            onClick={handleUploadAndSave}
-                            disabled={uploading || (selectedFiles.length === 0 && previewImages.filter(p => p.uploaded).length === 0)}
-                        >
-                            อัพโหลดและบันทึก
-                        </Button>
-                    </Stack>
+                    <Grid size={{ xs: 12, md: 6 }}>
+                        <Stack spacing={2}>
+                            <Button
+                                variant="outlined"
+                                component="label"
+                                startIcon={<CloudUpload />}
+                                disabled={previewImages.length >= MAX_IMAGES || uploading}
+                            >
+                                เลือกรูปภาพ
+                                <input
+                                    type="file"
+                                    accept="image/jpeg,image/jpg,image/png,image/webp"
+                                    multiple
+                                    hidden
+                                    onChange={handleFileSelect}
+                                />
+                            </Button>
+                            {cameraSupported && (
+                                <Button
+                                    variant="outlined"
+                                    color="secondary"
+                                    startIcon={<CameraAlt />}
+                                    onClick={() => openCamera('gallery')}
+                                    disabled={previewImages.length >= MAX_IMAGES || uploading}
+                                >
+                                    ถ่ายรูป
+                                </Button>
+                            )}
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                startIcon={<Save />}
+                                onClick={handleUploadAndSave}
+                                disabled={uploading || (selectedFiles.length === 0 && previewImages.filter(p => p.uploaded).length === 0)}
+                            >
+                                อัพโหลดและบันทึก
+                            </Button>
+                        </Stack>
+                    </Grid>
                 )}
                 {activeTab === 1 && deletedImages.length > 0 && (
                     <Button
@@ -731,30 +1055,57 @@ const ScmImage = ({ data, inspNo, inspSV, userKey, customerName, customerNo }) =
 
                     <Grid container spacing={2}>
                         {previewImages.map((image, index) => (
-                            <Grid size={{ xs: 6, sm: 4, md: 3 }} key={index}>
+                            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
                                 <Card
                                     sx={{
                                         border: image.uploaded ? '2px solid #4caf50' : '2px solid #ff9800',
                                     }}
                                 >
-                                    {/* ส่วนรูปภาพ */}
+                                    {/* ส่วนรูปภาพ (แก้ไข) */}
                                     <Box sx={{
-                                        /*  aspectRatio: '1/1', */
-                                        position: 'relative'
-                                    }}>
+                                        position: 'relative',
+                                        bgcolor: '#f5f5f5',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        minHeight: '200px',
+                                        cursor: 'pointer' // เพิ่มบรรทัดนี้
+                                    }}
+                                        onClick={() => openImageViewer(index, previewImages)} // เพิ่มบรรทัดนี้
+                                    >
                                         <Box
                                             component="img"
                                             src={image.url}
                                             sx={{
                                                 width: '100%',
-                                                height: '100%',
-                                                objectFit: 'cover'
+                                                height: 'auto',
+                                                display: 'block'
                                             }}
                                         />
 
-                                        {/* ปุ่มลบ */}
+                                        {/* เพิ่ม Zoom Icon */}
+                                        <Box
+                                            sx={{
+                                                position: 'absolute',
+                                                bottom: 8,
+                                                right: 8,
+                                                bgcolor: 'rgba(0,0,0,0.6)',
+                                                borderRadius: '50%',
+                                                p: 0.5,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center'
+                                            }}
+                                        >
+                                            <ZoomIn sx={{ color: 'white', fontSize: 20 }} />
+                                        </Box>
+
+                                        {/* ปุ่มลบ (แก้ไข) */}
                                         <IconButton
-                                            onClick={() => openDeleteDialog(index)}
+                                            onClick={(e) => {
+                                                e.stopPropagation(); // ป้องกันไม่ให้เปิด viewer
+                                                openDeleteDialog(index);
+                                            }}
                                             sx={{
                                                 position: 'absolute',
                                                 top: 8,
@@ -783,7 +1134,7 @@ const ScmImage = ({ data, inspNo, inspSV, userKey, customerName, customerNo }) =
                                     {image.uploaded && (
                                         <Box sx={{ p: 1.5, bgcolor: '#fafafa' }}>
                                             {savedDescriptions[image.id] && !editingDescription[image.id] ? (
-                                                // แสดง description ที่บันทึกแล้ว (เปลี่ยนจาก imageDescriptions เป็น savedDescriptions)
+                                                // แสดง description ที่บันทึกแล้ว
                                                 <Box>
                                                     <Typography
                                                         variant="body2"
@@ -836,7 +1187,6 @@ const ScmImage = ({ data, inspNo, inspSV, userKey, customerName, customerNo }) =
                                                             variant="outlined"
                                                             type="button"
                                                             onClick={() => {
-                                                                // ถ้ายกเลิกและยังไม่เคยบันทึก ให้ล้างค่า
                                                                 if (!savedDescriptions[image.id]) {
                                                                     setImageDescriptions(prev => {
                                                                         const newDesc = { ...prev };
@@ -872,7 +1222,7 @@ const ScmImage = ({ data, inspNo, inspSV, userKey, customerName, customerNo }) =
                                 ยังไม่มีรูปภาพ
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
-                                คลิกปุ่ม "เลือกรูปภาพ" เพื่อเริ่มต้น
+                                คลิกปุ่ม "เลือกรูปภาพ" หรือ "ถ่ายรูป" เพื่อเริ่มต้น
                             </Typography>
                         </Box>
                     )}
@@ -889,45 +1239,71 @@ const ScmImage = ({ data, inspNo, inspSV, userKey, customerName, customerNo }) =
                 <>
                     <Grid container spacing={2}>
                         {deletedImages.map((image, index) => (
-                            <Grid size={{ xs: 6, sm: 4, md: 3 }} key={index}>
+                            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
                                 <Card
                                     sx={{
-                                        /* aspectRatio: '1/1', */
                                         position: 'relative',
                                         border: '2px solid #757575',
                                         opacity: 0.7
                                     }}
                                 >
-                                    <Box
-                                        component="img"
-                                        src={image.url}
-                                        sx={{
-                                            width: '100%',
-                                            height: '100%',
-                                            objectFit: 'cover'
-                                        }}
-                                    />
-                                    <IconButton
-                                        onClick={() => openRestoreDialog(image)}
-                                        sx={{
-                                            position: 'absolute',
-                                            top: 8,
-                                            right: 8,
-                                            bgcolor: 'success.main',
-                                            color: 'white',
-                                            '&:hover': { bgcolor: 'success.dark' },
-                                            zIndex: 10
-                                        }}
-                                        size="small"
-                                    >
-                                        <Restore fontSize="small" />
-                                    </IconButton>
-                                    <Chip
-                                        label="ลบแล้ว"
-                                        color="error"
-                                        size="small"
-                                        sx={{ position: 'absolute', top: 8, left: 8, zIndex: 10 }}
-                                    />
+                                    <Box sx={{
+                                        position: 'relative',
+                                        bgcolor: '#f5f5f5',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        minHeight: '200px'
+                                    }}>
+                                        <Box
+                                            component="img"
+                                            src={image.url}
+                                            sx={{
+                                                width: '100%',
+                                                height: 'auto',
+                                                display: 'block'
+                                            }}
+                                        />
+                                        <Box
+                                            sx={{
+                                                position: 'absolute',
+                                                bottom: 8,
+                                                right: 52, // เว้นพื้นที่ปุ่ม restore
+                                                bgcolor: 'rgba(0,0,0,0.6)',
+                                                borderRadius: '50%',
+                                                p: 0.5,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center'
+                                            }}
+                                        >
+                                            <ZoomIn sx={{ color: 'white', fontSize: 20 }} />
+                                        </Box>
+                                        <IconButton
+                                            onClick={(e) => {
+                                                e.stopPropagation(); // ป้องกันไม่ให้เปิด viewer
+                                                openRestoreDialog(image);
+                                            }}
+                                            sx={{
+                                                position: 'absolute',
+                                                top: 8,
+                                                right: 8,
+                                                bgcolor: 'success.main',
+                                                color: 'white',
+                                                '&:hover': { bgcolor: 'success.dark' },
+                                                zIndex: 10
+                                            }}
+                                            size="small"
+                                        >
+                                            <Restore fontSize="small" />
+                                        </IconButton>
+                                        <Chip
+                                            label="ลบแล้ว"
+                                            color="error"
+                                            size="small"
+                                            sx={{ position: 'absolute', top: 8, left: 8, zIndex: 10 }}
+                                        />
+                                    </Box>
                                 </Card>
                             </Grid>
                         ))}
@@ -952,6 +1328,262 @@ const ScmImage = ({ data, inspNo, inspSV, userKey, customerName, customerNo }) =
                     )}
                 </>
             )}
+            {/* ======= เพิ่ม Image Viewer Dialog ======= */}
+            <Dialog
+                open={imageViewer.open}
+                onClose={closeImageViewer}
+                maxWidth={false}
+                fullScreen
+                sx={{
+                    '& .MuiDialog-paper': {
+                        bgcolor: 'rgba(0,0,0,0.95)'
+                    }
+                }}
+            >
+                <DialogTitle sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    bgcolor: 'rgba(0,0,0,0.8)',
+                    color: '#fff',
+                    py: 1
+                }}>
+                    <Typography variant="h6">
+                        รูปที่ {imageViewer.currentIndex + 1} / {imageViewer.images.length}
+                    </Typography>
+                    <IconButton onClick={closeImageViewer} sx={{ color: '#fff' }}>
+                        <Close />
+                    </IconButton>
+                </DialogTitle>
+                <DialogContent sx={{
+                    p: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    position: 'relative',
+                    overflow: 'hidden'
+                }}>
+                    {/* ปุ่มซ้าย */}
+                    {imageViewer.images.length > 1 && (
+                        <IconButton
+                            onClick={goToPrevious}
+                            sx={{
+                                position: 'absolute',
+                                left: 16,
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                bgcolor: 'rgba(255,255,255,0.2)',
+                                color: '#fff',
+                                '&:hover': {
+                                    bgcolor: 'rgba(255,255,255,0.3)'
+                                },
+                                width: 56,
+                                height: 56,
+                                zIndex: 10
+                            }}
+                        >
+                            <NavigateBefore sx={{ fontSize: 40 }} />
+                        </IconButton>
+                    )}
+
+                    {/* รูปภาพ */}
+                    <Box
+                        sx={{
+                            width: '100%',
+                            height: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            p: 2
+                        }}
+                    >
+                        <img
+                            src={imageViewer.images[imageViewer.currentIndex]?.url}
+                            alt={`รูปที่ ${imageViewer.currentIndex + 1}`}
+                            style={{
+                                maxWidth: '100%',
+                                maxHeight: '100%',
+                                objectFit: 'contain',
+                                userSelect: 'none'
+                            }}
+                        />
+                    </Box>
+
+                    {/* ปุ่มขวา */}
+                    {imageViewer.images.length > 1 && (
+                        <IconButton
+                            onClick={goToNext}
+                            sx={{
+                                position: 'absolute',
+                                right: 16,
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                bgcolor: 'rgba(255,255,255,0.2)',
+                                color: '#fff',
+                                '&:hover': {
+                                    bgcolor: 'rgba(255,255,255,0.3)'
+                                },
+                                width: 56,
+                                height: 56,
+                                zIndex: 10
+                            }}
+                        >
+                            <NavigateNext sx={{ fontSize: 40 }} />
+                        </IconButton>
+                    )}
+
+                    {/* แสดง Description ถ้ามี */}
+                    {imageViewer.images[imageViewer.currentIndex]?.id &&
+                        imageDescriptions[imageViewer.images[imageViewer.currentIndex].id] && (
+                            <Box
+                                sx={{
+                                    position: 'absolute',
+                                    bottom: 0,
+                                    left: 0,
+                                    right: 0,
+                                    bgcolor: 'rgba(0,0,0,0.7)',
+                                    color: '#fff',
+                                    p: 2,
+                                    zIndex: 10
+                                }}
+                            >
+                                <Typography variant="body1">
+                                    {imageDescriptions[imageViewer.images[imageViewer.currentIndex].id]}
+                                </Typography>
+                            </Box>
+                        )}
+
+                    {/* คำแนะนำการใช้งาน */}
+                    <Box
+                        sx={{
+                            position: 'absolute',
+                            top: 70,
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            bgcolor: 'rgba(0,0,0,0.6)',
+                            color: '#fff',
+                            px: 2,
+                            py: 1,
+                            borderRadius: 1,
+                            fontSize: '0.875rem',
+                            zIndex: 10
+                        }}
+                    >
+                        กด ← → เพื่อเลื่อนดูรูป | ESC เพื่อปิด
+                    </Box>
+                </DialogContent>
+            </Dialog>
+
+
+            {/* ======= Camera Dialog ======= */}
+            <Dialog
+                open={cameraOpen}
+                onClose={closeCamera}
+                maxWidth="md"
+                fullWidth
+                fullScreen
+            >
+                <DialogTitle sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    bgcolor: '#000',
+                    color: '#fff'
+                }}>
+                    <Typography variant="h6">
+                        {cameraMode === 'header' ? 'ถ่ายรูปปก' : 'ถ่ายรูปภาพ'}
+                    </Typography>
+                    <IconButton onClick={closeCamera} sx={{ color: '#fff' }}>
+                        <Close />
+                    </IconButton>
+                </DialogTitle>
+                <DialogContent sx={{ p: 0, bgcolor: '#000', position: 'relative' }}>
+                    {!capturedImage ? (
+                        <>
+                            <video
+                                ref={videoRef}
+                                autoPlay
+                                playsInline
+                                style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    objectFit: 'cover'
+                                }}
+                            />
+                            <Box sx={{
+                                position: 'absolute',
+                                bottom: 20,
+                                left: 0,
+                                right: 0,
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                gap: 2
+                            }}>
+                                <IconButton
+                                    onClick={switchCamera}
+                                    sx={{
+                                        bgcolor: 'rgba(255,255,255,0.9)',
+                                        '&:hover': { bgcolor: 'rgba(255,255,255,1)' }
+                                    }}
+                                >
+                                    <FlipCameraAndroid />
+                                </IconButton>
+                                <IconButton
+                                    onClick={capturePhoto}
+                                    sx={{
+                                        width: 70,
+                                        height: 70,
+                                        bgcolor: 'rgba(255,255,255,0.9)',
+                                        '&:hover': { bgcolor: 'rgba(255,255,255,1)' }
+                                    }}
+                                >
+                                    <PhotoCamera sx={{ fontSize: 40 }} />
+                                </IconButton>
+                            </Box>
+                        </>
+                    ) : (
+                        <>
+                            <img
+                                src={capturedImage}
+                                alt="Captured"
+                                style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    objectFit: 'contain'
+                                }}
+                            />
+                            <Box sx={{
+                                position: 'absolute',
+                                bottom: 20,
+                                left: 0,
+                                right: 0,
+                                display: 'flex',
+                                justifyContent: 'center',
+                                gap: 2
+                            }}>
+                                <Button
+                                    variant="contained"
+                                    color="error"
+                                    onClick={retakePhoto}
+                                    startIcon={<Close />}
+                                >
+                                    ถ่ายใหม่
+                                </Button>
+                                <Button
+                                    variant="contained"
+                                    color="success"
+                                    onClick={closeCamera}
+                                    startIcon={<CheckCircle />}
+                                >
+                                    ใช้รูปนี้
+                                </Button>
+                            </Box>
+                        </>
+                    )}
+                    <canvas ref={canvasRef} style={{ display: 'none' }} />
+                </DialogContent>
+            </Dialog>
 
             {/* Delete Dialog */}
             <Dialog open={deleteDialog.open} onClose={closeDeleteDialog}>

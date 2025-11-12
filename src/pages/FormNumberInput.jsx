@@ -5,12 +5,12 @@ import {
     Box, Typography, Chip, Grid, Breadcrumbs, Link, LinearProgress,
     Button, Card, CardContent, Container, Paper, Fade, Grow,
     alpha, useTheme, TextField, List, ListItem, ListItemButton,
-    ListItemIcon, ListItemText, CircularProgress
+    ListItemIcon, ListItemText, CircularProgress, InputAdornment
 } from '@mui/material';
 import Swal from 'sweetalert2';
 import {
     Building2, ScanQrCode, Network, Siren, ArrowLeft,
-    Save, Pencil, FileText, ChevronRight, CheckCircle2, Circle, Tag
+    Save, Pencil, FileText, ChevronRight, CheckCircle2, Circle, Tag, Search, Printer
 } from 'lucide-react';
 
 // Loading Component
@@ -63,6 +63,7 @@ export default function FormNumberInput() {
     const [loadingStatus, setLoadingStatus] = useState(false); // ⭐ สถานะการโหลด
     const [isEditing, setIsEditing] = useState(true);
     const [refreshNumber, setRefreshNumber] = useState(0);
+    const [searchQuery, setSearchQuery] = useState(''); // ⭐ สำหรับค้นหา
 
     const apiHost = import.meta.env.VITE_API_HOST;
 
@@ -70,7 +71,7 @@ export default function FormNumberInput() {
     useEffect(() => {
         setLoading(true);
         const minLoadingTime = new Promise(resolve => setTimeout(resolve, 1000));
-        const fetchData = axios.get(`${apiHost}/api/inspection/${id}`);
+        const fetchData = axios.get(`${apiHost}/api/inspectionPM/${id}`);
 
         Promise.all([minLoadingTime, fetchData])
             .then(([, res]) => {
@@ -101,7 +102,7 @@ export default function FormNumberInput() {
                     setIsEditing(true);
                 });
         }
-    }, [data, id, refreshNumber]); //  เพิ่ม refreshNumber เป็น dependency
+    }, [data, id, refreshNumber]);
 
     // ⭐ โหลดสถานะของแต่ละฟอร์ม
     useEffect(() => {
@@ -179,9 +180,8 @@ export default function FormNumberInput() {
                     timerProgressBar: true,
                 });
 
-                // ⭐ Trigger useEffect เพื่อโหลดข้อมูลใหม่
                 setRefreshNumber(prev => prev + 1);
-                setIsEditing(false); // ⭐ เปลี่ยนเป็นโหมดดู
+                setIsEditing(false);
             }
         } catch (err) {
             console.error('Save error:', err);
@@ -217,6 +217,19 @@ export default function FormNumberInput() {
     const formsList = formNumber > 0
         ? Array.from({ length: parseInt(formNumber) }, (_, i) => i + 1)
         : [];
+
+    // ⭐ ฟังก์ชันกรองรายการตามการค้นหา
+    const filteredFormsList = formsList.filter((formIndex) => {
+        if (!searchQuery.trim()) return true; // ถ้าไม่มีคำค้นหา แสดงทั้งหมด
+
+        const status = formsStatus[formIndex] || { created: false, tagNo: null };
+        const jobsheetId = `${id}-${formIndex}`.toLowerCase();
+        const tagNo = (status.tagNo || '').toLowerCase();
+        const query = searchQuery.toLowerCase().trim();
+
+        // ค้นหาทั้ง Jobsheet ID และ Tag Number
+        return jobsheetId.includes(query) || tagNo.includes(query);
+    });
 
     // นับจำนวนฟอร์มที่สร้างแล้ว
     const createdFormsCount = Object.values(formsStatus).filter(status => status.created).length;
@@ -469,7 +482,6 @@ export default function FormNumberInput() {
                                         </Grid>
 
                                         {/* Right Side - Form Number Input */}
-                                        {/* Right Side - Form Number Input */}
                                         <Grid size={{ xs: 12, lg: 4 }}>
                                             <Box
                                                 sx={{
@@ -501,7 +513,6 @@ export default function FormNumberInput() {
                                                     </Typography>
                                                 </Box>
 
-                                                {/* แสดง TextField และปุ่มตามสถานะ */}
                                                 {isEditing ? (
                                                     <>
                                                         <TextField
@@ -623,7 +634,7 @@ export default function FormNumberInput() {
                                             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                                         }}
                                     >
-                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                                             <Typography
                                                 variant="h5"
                                                 fontWeight={700}
@@ -647,153 +658,231 @@ export default function FormNumberInput() {
                                                 />
                                             )}
                                         </Box>
+
+                                        {/* ⭐ ช่องค้นหา */}
+                                        <TextField
+                                            fullWidth
+                                            variant="outlined"
+                                            placeholder="ค้นหาด้วย Jobsheet ID หรือ Tag Number..."
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            InputProps={{
+                                                startAdornment: (
+                                                    <InputAdornment position="start">
+                                                        <Search size={20} color="white" />
+                                                    </InputAdornment>
+                                                ),
+                                            }}
+                                            sx={{
+                                                '& .MuiOutlinedInput-root': {
+                                                    bgcolor: 'rgba(255,255,255,0.15)',
+                                                    backdropFilter: 'blur(10px)',
+                                                    color: 'white',
+                                                    borderRadius: 2,
+                                                    '& fieldset': {
+                                                        borderColor: 'rgba(255,255,255,0.3)',
+                                                    },
+                                                    '&:hover fieldset': {
+                                                        borderColor: 'rgba(255,255,255,0.5)',
+                                                    },
+                                                    '&.Mui-focused fieldset': {
+                                                        borderColor: 'white',
+                                                    },
+                                                },
+                                                '& .MuiOutlinedInput-input': {
+                                                    color: 'white',
+                                                    '&::placeholder': {
+                                                        color: 'rgba(255,255,255,0.7)',
+                                                        opacity: 1,
+                                                    },
+                                                },
+                                            }}
+                                        />
                                     </Box>
 
                                     <List sx={{ p: 0 }}>
-                                        {formsList.map((formIndex, index) => {
-                                            const status = formsStatus[formIndex] || { created: false, tagNo: null, count: 0 };
+                                        {filteredFormsList.length > 0 ? (
+                                            filteredFormsList.map((formIndex, index) => {
+                                                const status = formsStatus[formIndex] || { created: false, tagNo: null, count: 0 };
 
-                                            return (
-                                                <Grow in timeout={(index + 1) * 100} key={formIndex}>
-                                                    <ListItem
-                                                        disablePadding
-                                                        sx={{
-                                                            borderBottom: index !== formsList.length - 1 ? '1px solid' : 'none',
-                                                            borderColor: 'grey.200',
-                                                        }}
-                                                    >
-                                                        <ListItemButton
-                                                            onClick={() => handleFormClick(formIndex)}
+                                                return (
+                                                    <Grow in timeout={(index + 1) * 100} key={formIndex}>
+                                                        <ListItem
+                                                            disablePadding
                                                             sx={{
-                                                                py: 2.5,
-                                                                px: 3,
-                                                                transition: 'all 0.3s ease',
-                                                                bgcolor: status.created ? alpha(theme.palette.success.main, 0.02) : 'transparent',
-                                                                '&:hover': {
-                                                                    bgcolor: status.created
-                                                                        ? alpha(theme.palette.success.main, 0.1)
-                                                                        : alpha(theme.palette.primary.main, 0.08),
-                                                                    transform: 'translateX(8px)',
-                                                                    '& .form-number': {
-                                                                        background: status.created
-                                                                            ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-                                                                            : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                                                                        color: 'white',
-                                                                    },
-                                                                    '& .chevron-icon': {
-                                                                        transform: 'translateX(4px)',
-                                                                        color: status.created ? 'success.main' : 'primary.main',
-                                                                    }
-                                                                }
+                                                                borderBottom: index !== filteredFormsList.length - 1 ? '1px solid' : 'none',
+                                                                borderColor: 'grey.200',
                                                             }}
                                                         >
-                                                            <ListItemIcon>
-                                                                <Box
-                                                                    className="form-number"
-                                                                    sx={{
-                                                                        width: 48,
-                                                                        height: 48,
-                                                                        borderRadius: 2,
-                                                                        display: 'flex',
-                                                                        alignItems: 'center',
-                                                                        justifyContent: 'center',
-                                                                        fontWeight: 700,
-                                                                        fontSize: '1.1rem',
+                                                            <ListItemButton
+                                                                onClick={() => handleFormClick(formIndex)}
+                                                                sx={{
+                                                                    py: 2.5,
+                                                                    px: 3,
+                                                                    transition: 'all 0.3s ease',
+                                                                    bgcolor: status.created ? alpha(theme.palette.success.main, 0.02) : 'transparent',
+                                                                    '&:hover': {
                                                                         bgcolor: status.created
                                                                             ? alpha(theme.palette.success.main, 0.1)
-                                                                            : alpha(theme.palette.primary.main, 0.1),
-                                                                        color: status.created ? 'success.main' : 'primary.main',
-                                                                        border: '2px solid',
-                                                                        borderColor: status.created
-                                                                            ? alpha(theme.palette.success.main, 0.3)
-                                                                            : alpha(theme.palette.primary.main, 0.2),
-                                                                        transition: 'all 0.3s ease',
-                                                                    }}
-                                                                >
-                                                                    {formIndex}
-                                                                </Box>
-                                                            </ListItemIcon>
-                                                            <ListItemText
-                                                                primary={
-                                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                                        <Typography variant="h6" fontWeight={600}>
-                                                                            งานที่ {formIndex}
-                                                                        </Typography>
-                                                                        {status.created && (
-                                                                            <CheckCircle2
-                                                                                size={20}
-                                                                                color={theme.palette.success.main}
-                                                                            />
-                                                                        )}
+                                                                            : alpha(theme.palette.primary.main, 0.08),
+                                                                        transform: 'translateX(8px)',
+                                                                        '& .form-number': {
+                                                                            background: status.created
+                                                                                ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+                                                                                : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                                                            color: 'white',
+                                                                        },
+                                                                        '& .chevron-icon': {
+                                                                            transform: 'translateX(4px)',
+                                                                            color: status.created ? 'success.main' : 'primary.main',
+                                                                        }
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <ListItemIcon>
+                                                                    <Box
+                                                                        className="form-number"
+                                                                        sx={{
+                                                                            width: 48,
+                                                                            height: 48,
+                                                                            borderRadius: 2,
+                                                                            display: 'flex',
+                                                                            alignItems: 'center',
+                                                                            justifyContent: 'center',
+                                                                            fontWeight: 700,
+                                                                            fontSize: '1.1rem',
+                                                                            bgcolor: status.created
+                                                                                ? alpha(theme.palette.success.main, 0.1)
+                                                                                : alpha(theme.palette.primary.main, 0.1),
+                                                                            color: status.created ? 'success.main' : 'primary.main',
+                                                                            border: '2px solid',
+                                                                            borderColor: status.created
+                                                                                ? alpha(theme.palette.success.main, 0.3)
+                                                                                : alpha(theme.palette.primary.main, 0.2),
+                                                                            transition: 'all 0.3s ease',
+                                                                        }}
+                                                                    >
+                                                                        {formIndex}
                                                                     </Box>
-                                                                }
-                                                                secondary={
-                                                                    <Box component="span"> {/* ⭐ เปลี่ยนจาก div เป็น span */}
-                                                                        <Typography
-                                                                            variant="body2"
-                                                                            color="text.secondary"
-                                                                            component="span" // ⭐ เพิ่ม component="span"
-                                                                        >
-                                                                            Jobsheet: {id}-{formIndex}
-                                                                        </Typography>
-                                                                        {status.created && status.tagNo && (
-                                                                            <Box
-                                                                                component="span" // ⭐ เปลี่ยนเป็น span
-                                                                                sx={{
-                                                                                    display: 'flex',
-                                                                                    alignItems: 'center',
-                                                                                    gap: 0.5,
-                                                                                    mt: 0.5
-                                                                                }}
+                                                                </ListItemIcon>
+                                                                <ListItemText
+                                                                    primary={
+                                                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                                            <Typography variant="h6" fontWeight={600}>
+                                                                                งานที่ {formIndex}
+                                                                            </Typography>
+                                                                            {status.created && (
+                                                                                <CheckCircle2
+                                                                                    size={20}
+                                                                                    color={theme.palette.success.main}
+                                                                                />
+                                                                            )}
+                                                                        </Box>
+                                                                    }
+                                                                    secondary={
+                                                                        <Box component="span">
+                                                                            <Typography
+                                                                                variant="body2"
+                                                                                color="text.secondary"
+                                                                                component="span"
                                                                             >
-                                                                                <Tag size={14} color={theme.palette.success.main} />
-                                                                                <Typography
-                                                                                    variant="caption"
-                                                                                    color="success.main"
-                                                                                    fontWeight={600}
-                                                                                    component="span" // ⭐ เพิ่ม component="span"
+                                                                                Jobsheet: {id}-{formIndex}
+                                                                            </Typography>
+                                                                            {status.created && status.tagNo && (
+                                                                                <Box
+                                                                                    component="span"
+                                                                                    sx={{
+                                                                                        display: 'flex',
+                                                                                        alignItems: 'center',
+                                                                                        gap: 0.5,
+                                                                                        mt: 0.5
+                                                                                    }}
                                                                                 >
-                                                                                    Tag: {status.tagNo}
-                                                                                </Typography>
-                                                                                {status.count > 1 && (
-                                                                                    <Chip
-                                                                                        label={`+${status.count - 1}`}
-                                                                                        size="small"
-                                                                                        color="success"
-                                                                                        sx={{
-                                                                                            height: 18,
-                                                                                            fontSize: '0.7rem',
-                                                                                            ml: 0.5
-                                                                                        }}
-                                                                                    />
-                                                                                )}
-                                                                            </Box>
-                                                                        )}
-                                                                    </Box>
-                                                                }
-                                                            />
-                                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                                <Chip
-                                                                    size="small"
-                                                                    label={status.created ? 'สร้างแล้ว' : 'รอสร้าง'}
-                                                                    color={status.created ? 'success' : 'default'}
-                                                                    icon={status.created ? <CheckCircle2 size={14} /> : <Circle size={14} />}
-                                                                    sx={{ fontWeight: 600 }}
+                                                                                    <Tag size={14} color={theme.palette.success.main} />
+                                                                                    <Typography
+                                                                                        variant="caption"
+                                                                                        color="success.main"
+                                                                                        fontWeight={600}
+                                                                                        component="span"
+                                                                                    >
+                                                                                        Tag: {status.tagNo}
+                                                                                    </Typography>
+                                                                                    {status.count > 1 && (
+                                                                                        <Chip
+                                                                                            label={`+${status.count - 1}`}
+                                                                                            size="small"
+                                                                                            color="success"
+                                                                                            sx={{
+                                                                                                height: 18,
+                                                                                                fontSize: '0.7rem',
+                                                                                                ml: 0.5
+                                                                                            }}
+                                                                                        />
+                                                                                    )}
+                                                                                </Box>
+                                                                            )}
+                                                                        </Box>
+                                                                    }
                                                                 />
-                                                                <ChevronRight
-                                                                    className="chevron-icon"
-                                                                    size={24}
-                                                                    style={{
-                                                                        transition: 'all 0.3s ease',
-                                                                        color: theme.palette.text.secondary
-                                                                    }}
-                                                                />
-                                                            </Box>
-                                                        </ListItemButton>
-                                                    </ListItem>
-                                                </Grow>
-                                            );
-                                        })}
+                                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                                    {status.created && (
+                                                                        <Button
+                                                                            variant="outlined"
+                                                                            color="default"
+                                                                            size="small"
+                                                                            startIcon={<Printer size={16} />}
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                window.open(`/print/${id}-${formIndex}`, '_blank');
+                                                                            }}
+                                                                            sx={{
+                                                                                borderRadius: 2,
+                                                                                fontWeight: 600,
+                                                                                minWidth: 'auto',
+                                                                                px: 2,
+                                                                                py: 0.5,
+                                                                                transition: 'all 0.3s ease',
+                                                                                '&:hover': {
+                                                                                    transform: 'scale(1.05)',
+                                                                                    boxShadow: 2
+                                                                                }
+                                                                            }}
+                                                                        >
+                                                                            Print
+                                                                        </Button>
+                                                                    )}
+                                                                    <Chip
+                                                                        size="small"
+                                                                        label={status.created ? 'สร้างแล้ว' : 'รอสร้าง'}
+                                                                        color={status.created ? 'success' : 'default'}
+                                                                        icon={status.created ? <CheckCircle2 size={14} /> : <Circle size={14} />}
+                                                                        sx={{ fontWeight: 600 }}
+                                                                    />
+                                                                    <ChevronRight
+                                                                        className="chevron-icon"
+                                                                        size={24}
+                                                                        style={{
+                                                                            transition: 'all 0.3s ease',
+                                                                            color: theme.palette.text.secondary
+                                                                        }}
+                                                                    />
+                                                                </Box>
+                                                            </ListItemButton>
+                                                        </ListItem>
+                                                    </Grow>
+                                                );
+                                            })
+                                        ) : (
+                                            <Box sx={{ p: 6, textAlign: 'center' }}>
+                                                <Search size={48} color={theme.palette.grey[400]} style={{ marginBottom: 16 }} />
+                                                <Typography variant="h6" color="text.secondary" fontWeight={600}>
+                                                    ไม่พบรายการที่ค้นหา
+                                                </Typography>
+                                                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                                                    ลองค้นหาด้วยคำอื่น หรือตรวจสอบการสะกดคำ
+                                                </Typography>
+                                            </Box>
+                                        )}
                                     </List>
                                 </Card>
                             </Grow>
@@ -819,7 +908,6 @@ export default function FormNumberInput() {
                     </Box>
                 </Fade>
             </Container>
-
             <Box sx={{ pb: 6 }} />
         </Box>
     );

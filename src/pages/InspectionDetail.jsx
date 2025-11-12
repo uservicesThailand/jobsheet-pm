@@ -206,7 +206,7 @@ export default function InspectionDetail() {
     useEffect(() => {
         setLoading(true);
         const minLoadingTime = new Promise(resolve => setTimeout(resolve, 1000));
-        const fetchData = axios.get(`${apiHost}/api/inspection/${id}`);
+        const fetchData = axios.get(`${apiHost}/api/inspectionPM/${id}`);
 
         Promise.all([minLoadingTime, fetchData])
             .then(([, res]) => {

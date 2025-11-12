@@ -326,7 +326,7 @@ export default function FormSquirrelCageMotor({ date, data, inspNo, inspSV, user
         }));
 
         setResistanceTests({
-            test_unit: data.scm_rt_test_unit || 'm',
+            test_unit: data.scm_rt_test_unit || '',
             resistance_uv: data.scm_rt_resistance_uv || '',
             resistance_uw: data.scm_rt_resistance_uw || '',
             resistance_vw: data.scm_rt_resistance_vw || '',
@@ -334,7 +334,7 @@ export default function FormSquirrelCageMotor({ date, data, inspNo, inspSV, user
         });
 
         setInductanceTests({
-            test_unit: data.scm_lt_test_unit || 'm',
+            test_unit: data.scm_lt_test_unit || '',
             inductance_uv: data.scm_lt_inductance_uv || '',
             inductance_uw: data.scm_lt_inductance_uw || '',
             inductance_vw: data.scm_lt_inductance_vw || '',
@@ -1092,31 +1092,173 @@ StandstillTestSection.displayName = 'StandstillTestSection';
 
 // 8. Insulation Test Table
 const InsulationTestTable = memo(({ insulationTests, insulationNote, onTestChange, onNoteChange }) => (
-    <TableContainer component={Paper}>
-        <Table>
+    <TableContainer
+        component={Paper}
+        sx={{
+            overflowX: 'auto',
+            maxWidth: '100%',
+            '&::-webkit-scrollbar': {
+                height: '8px',
+            },
+            '&::-webkit-scrollbar-thumb': {
+                backgroundColor: '#bedde2',
+                borderRadius: '4px',
+            },
+        }}
+    >
+        <Table sx={{ minWidth: 800 }}>
             <TableHead sx={{ backgroundColor: '#bedde2' }}>
                 <TableRow>
-                    <TableCell colSpan={8} align="center">Insulation Test</TableCell>
+                    <TableCell
+                        colSpan={8}
+                        align="center"
+                        sx={{
+                            fontSize: { xs: '0.875rem', sm: '1rem' },
+                            fontWeight: 'bold',
+                            padding: { xs: '12px 8px', sm: '16px' }
+                        }}
+                    >
+                        Insulation Test (MΩ)
+                    </TableCell>
                 </TableRow>
                 <TableRow>
-                    <TableCell rowSpan={2} align="center">Volt</TableCell>
-                    <TableCell rowSpan={2} align="center">Marking</TableCell>
-                    <TableCell colSpan={2} align="center">1 min.</TableCell>
-                    <TableCell colSpan={2} align="center">10 min.</TableCell>
-                    <TableCell rowSpan={2} align="center">PI</TableCell>
-                    <TableCell rowSpan={2} align="center">Winding Temp</TableCell>
+                    <TableCell
+                        rowSpan={2}
+                        align="center"
+                        sx={{
+                            minWidth: '80px',
+                            fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                            fontWeight: 600,
+                            padding: { xs: '8px 4px', sm: '12px 8px' },
+                            borderRight: '1px solid rgba(224, 224, 224, 1)'
+                        }}
+                    >
+                        Volt
+                    </TableCell>
+                    <TableCell
+                        rowSpan={2}
+                        align="center"
+                        sx={{
+                            minWidth: '90px',
+                            fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                            fontWeight: 600,
+                            padding: { xs: '8px 4px', sm: '12px 8px' },
+                            borderRight: '1px solid rgba(224, 224, 224, 1)'
+                        }}
+                    >
+                        Marking
+                    </TableCell>
+                    <TableCell
+                        colSpan={2}
+                        align="center"
+                        sx={{
+                            minWidth: '160px',
+                            fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                            fontWeight: 600,
+                            padding: { xs: '8px 4px', sm: '12px 8px' },
+                            borderRight: '1px solid rgba(224, 224, 224, 1)'
+                        }}
+                    >
+                        1 min.
+                    </TableCell>
+                    <TableCell
+                        colSpan={2}
+                        align="center"
+                        sx={{
+                            minWidth: '160px',
+                            fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                            fontWeight: 600,
+                            padding: { xs: '8px 4px', sm: '12px 8px' },
+                            borderRight: '1px solid rgba(224, 224, 224, 1)'
+                        }}
+                    >
+                        10 min.
+                    </TableCell>
+                    <TableCell
+                        rowSpan={2}
+                        align="center"
+                        sx={{
+                            minWidth: '70px',
+                            fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                            fontWeight: 600,
+                            padding: { xs: '8px 4px', sm: '12px 8px' },
+                            borderRight: '1px solid rgba(224, 224, 224, 1)'
+                        }}
+                    >
+                        PI
+                    </TableCell>
+                    <TableCell
+                        rowSpan={2}
+                        align="center"
+                        sx={{
+                            minWidth: '100px',
+                            fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                            fontWeight: 600,
+                            padding: { xs: '8px 4px', sm: '12px 8px' }
+                        }}
+                    >
+                        Winding Temp
+                    </TableCell>
                 </TableRow>
                 <TableRow>
-                    <TableCell align="center">C</TableCell>
-                    <TableCell align="center">40C</TableCell>
-                    <TableCell align="center">C</TableCell>
-                    <TableCell align="center">40C</TableCell>
+                    <TableCell
+                        align="center"
+                        sx={{
+                            minWidth: '80px',
+                            fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                            padding: { xs: '8px 4px', sm: '12px 8px' }
+                        }}
+                    >
+                        °C
+                    </TableCell>
+                    <TableCell
+                        align="center"
+                        sx={{
+                            minWidth: '80px',
+                            fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                            padding: { xs: '8px 4px', sm: '12px 8px' },
+                            borderRight: '1px solid rgba(224, 224, 224, 1)'
+                        }}
+                    >
+                        40°C
+                    </TableCell>
+                    <TableCell
+                        align="center"
+                        sx={{
+                            minWidth: '80px',
+                            fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                            padding: { xs: '8px 4px', sm: '12px 8px' }
+                        }}
+                    >
+                        °C
+                    </TableCell>
+                    <TableCell
+                        align="center"
+                        sx={{
+                            minWidth: '80px',
+                            fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                            padding: { xs: '8px 4px', sm: '12px 8px' },
+                            borderRight: '1px solid rgba(224, 224, 224, 1)'
+                        }}
+                    >
+                        40°C
+                    </TableCell>
                 </TableRow>
             </TableHead>
             <TableBody>
                 {insulationTests.map((test, index) => (
-                    <TableRow key={index}>
-                        <TableCell>
+                    <TableRow
+                        key={index}
+                        sx={{
+                            '&:nth-of-type(odd)': {
+                                backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                            },
+                            '&:hover': {
+                                backgroundColor: 'rgba(190, 221, 226, 0.1)',
+                            },
+                        }}
+                    >
+                        <TableCell sx={{ padding: { xs: '8px 4px', sm: '12px 8px' } }}>
                             <TextField
                                 variant="standard"
                                 size="small"
@@ -1124,11 +1266,23 @@ const InsulationTestTable = memo(({ insulationTests, insulationNote, onTestChang
                                 type="number"
                                 value={test.test_voltage}
                                 onChange={(e) => onTestChange(index, 'test_voltage', e.target.value)}
-                                inputProps={{ step: "0.01", min: "0" }}
+                                inputProps={{
+                                    step: "0.01",
+                                    min: "0",
+                                    style: {
+                                        fontSize: '0.875rem',
+                                        padding: '4px 0'
+                                    }
+                                }}
                             />
                         </TableCell>
-                        <TableCell>{test.phase_marking}</TableCell>
-                        <TableCell>
+                        <TableCell sx={{
+                            padding: { xs: '8px 4px', sm: '12px 8px' },
+                            fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                        }}>
+                            {test.phase_marking}
+                        </TableCell>
+                        <TableCell sx={{ padding: { xs: '8px 4px', sm: '12px 8px' } }}>
                             <TextField
                                 variant="standard"
                                 size="small"
@@ -1136,9 +1290,15 @@ const InsulationTestTable = memo(({ insulationTests, insulationNote, onTestChang
                                 type="text"
                                 value={test.resistance_1min_c}
                                 onChange={(e) => onTestChange(index, 'resistance_1min_c', e.target.value)}
+                                inputProps={{
+                                    style: {
+                                        fontSize: '0.875rem',
+                                        padding: '4px 0'
+                                    }
+                                }}
                             />
                         </TableCell>
-                        <TableCell>
+                        <TableCell sx={{ padding: { xs: '8px 4px', sm: '12px 8px' } }}>
                             <TextField
                                 variant="standard"
                                 size="small"
@@ -1146,9 +1306,15 @@ const InsulationTestTable = memo(({ insulationTests, insulationNote, onTestChang
                                 type="text"
                                 value={test.resistance_1min_40c}
                                 onChange={(e) => onTestChange(index, 'resistance_1min_40c', e.target.value)}
+                                inputProps={{
+                                    style: {
+                                        fontSize: '0.875rem',
+                                        padding: '4px 0'
+                                    }
+                                }}
                             />
                         </TableCell>
-                        <TableCell>
+                        <TableCell sx={{ padding: { xs: '8px 4px', sm: '12px 8px' } }}>
                             <TextField
                                 variant="standard"
                                 size="small"
@@ -1156,9 +1322,15 @@ const InsulationTestTable = memo(({ insulationTests, insulationNote, onTestChang
                                 type="text"
                                 value={test.resistance_10min_c}
                                 onChange={(e) => onTestChange(index, 'resistance_10min_c', e.target.value)}
+                                inputProps={{
+                                    style: {
+                                        fontSize: '0.875rem',
+                                        padding: '4px 0'
+                                    }
+                                }}
                             />
                         </TableCell>
-                        <TableCell>
+                        <TableCell sx={{ padding: { xs: '8px 4px', sm: '12px 8px' } }}>
                             <TextField
                                 variant="standard"
                                 size="small"
@@ -1166,9 +1338,15 @@ const InsulationTestTable = memo(({ insulationTests, insulationNote, onTestChang
                                 type="text"
                                 value={test.resistance_10min_40c}
                                 onChange={(e) => onTestChange(index, 'resistance_10min_40c', e.target.value)}
+                                inputProps={{
+                                    style: {
+                                        fontSize: '0.875rem',
+                                        padding: '4px 0'
+                                    }
+                                }}
                             />
                         </TableCell>
-                        <TableCell>
+                        <TableCell sx={{ padding: { xs: '8px 4px', sm: '12px 8px' } }}>
                             <TextField
                                 variant="standard"
                                 size="small"
@@ -1176,9 +1354,15 @@ const InsulationTestTable = memo(({ insulationTests, insulationNote, onTestChang
                                 type="text"
                                 value={test.polarization_index}
                                 onChange={(e) => onTestChange(index, 'polarization_index', e.target.value)}
+                                inputProps={{
+                                    style: {
+                                        fontSize: '0.875rem',
+                                        padding: '4px 0'
+                                    }
+                                }}
                             />
                         </TableCell>
-                        <TableCell>
+                        <TableCell sx={{ padding: { xs: '8px 4px', sm: '12px 8px' } }}>
                             <TextField
                                 variant="standard"
                                 size="small"
@@ -1186,6 +1370,12 @@ const InsulationTestTable = memo(({ insulationTests, insulationNote, onTestChang
                                 type="text"
                                 value={test.winding_temp}
                                 onChange={(e) => onTestChange(index, 'winding_temp', e.target.value)}
+                                inputProps={{
+                                    style: {
+                                        fontSize: '0.875rem',
+                                        padding: '4px 0'
+                                    }
+                                }}
                             />
                         </TableCell>
                     </TableRow>
@@ -1195,11 +1385,10 @@ const InsulationTestTable = memo(({ insulationTests, insulationNote, onTestChang
     </TableContainer>
 ));
 InsulationTestTable.displayName = 'InsulationTestTable';
-
 // 9. Resistance Tests Table
 const ResistanceTestsTable = memo(({ resistanceTests, onChange }) => (
     <>
-        <Typography variant="subtitle2" sx={{ minWidth: '200px', mb: 2 }}>
+        <Typography variant="subtitle2" sx={{ minWidth: '200px', mb: 2, color: 'red' }}>
             Refer Standard IEEE 43-2000 : Min. Insulation Recommend {'>'}100 mΩ/ Polarization Index Recommend 2-5
         </Typography>
         <TableContainer component={Paper} sx={{ mb: 2 }}>
@@ -1207,7 +1396,13 @@ const ResistanceTestsTable = memo(({ resistanceTests, onChange }) => (
                 <TableHead sx={{ backgroundColor: '#bedde2' }}>
                     <TableRow>
                         <TableCell rowSpan={2} align="center">Test Condition</TableCell>
-                        <TableCell align="center" colSpan={3}>Main Stator</TableCell>
+                        <TableCell align="center" colSpan={3}
+                            sx={{
+                                fontSize: { xs: '0.875rem', sm: '1rem' },
+                                fontWeight: 'bold',
+                                padding: { xs: '12px 8px', sm: '16px' }
+                            }}
+                        >Main Stator</TableCell>
                     </TableRow>
                     <TableRow>
                         <TableCell align="center">U - V</TableCell>
@@ -1303,7 +1498,13 @@ const InductanceTestsTable = memo(({ inductanceTests, onChange }) => (
             <TableHead sx={{ backgroundColor: '#bedde2' }}>
                 <TableRow>
                     <TableCell rowSpan={2} align="center">Test Condition</TableCell>
-                    <TableCell align="center" colSpan={3}>Main Stator</TableCell>
+                    <TableCell align="center" colSpan={3}
+                        sx={{
+                            fontSize: { xs: '0.875rem', sm: '1rem' },
+                            fontWeight: 'bold',
+                            padding: { xs: '12px 8px', sm: '16px' }
+                        }}
+                    >Main Stator</TableCell>
                 </TableRow>
                 <TableRow>
                     <TableCell align="center">U - V</TableCell>
@@ -1394,26 +1595,115 @@ InductanceTestsTable.displayName = 'InductanceTestsTable';
 // 11. Temperature Sensor Bearing Table
 const TempSensorBearingTable = memo(({ tempSensorsBearing, onChange }) => (
     <>
-        <Typography variant="subtitle2" sx={{ minWidth: '200px', mt: 2, mb: 2, ml: 2 }}>
+        <Typography
+            variant="subtitle2"
+            sx={{
+                minWidth: '200px',
+                mt: 2,
+                mb: 2,
+                ml: { xs: 1, sm: 2 },
+                fontSize: { xs: '0.875rem', sm: '1rem' },
+                fontWeight: 600
+            }}
+        >
             3.2 Temperature Sensor And Heater
         </Typography>
-        <TableContainer component={Paper} sx={{ mb: 2 }}>
-            <Table>
+        <TableContainer
+            component={Paper}
+            sx={{
+                mb: 2,
+                overflowX: 'auto',
+                maxWidth: '100%',
+                '&::-webkit-scrollbar': {
+                    height: '8px',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                    backgroundColor: '#bedde2',
+                    borderRadius: '4px',
+                },
+            }}
+        >
+            <Table sx={{ minWidth: 600 }}>
                 <TableHead sx={{ backgroundColor: '#bedde2' }}>
                     <TableRow>
-                        <TableCell colSpan={6} align="center">TEMPERATURE SENSOR (BEARING)</TableCell>
+                        <TableCell
+                            colSpan={6}
+                            align="center"
+                            sx={{
+                                fontSize: { xs: '0.875rem', sm: '1rem' },
+                                fontWeight: 'bold',
+                                padding: { xs: '12px 8px', sm: '16px' }
+                            }}
+                        >
+                            TEMPERATURE SENSOR (BEARING)
+                        </TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                    <TableRow>
-                        <TableCell align="center">LOCATION</TableCell>
-                        <TableCell colSpan={2} align="center">DE</TableCell>
-                        <TableCell colSpan={2} align="center">NDE</TableCell>
-                        <TableCell align="center">TYPE</TableCell>
+                    <TableRow sx={{ backgroundColor: 'rgba(190, 221, 226, 0.3)' }}>
+                        <TableCell
+                            align="center"
+                            sx={{
+                                minWidth: '120px',
+                                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                fontWeight: 600,
+                                padding: { xs: '8px 4px', sm: '12px 8px' }
+                            }}
+                        >
+                            LOCATION
+                        </TableCell>
+                        <TableCell
+                            colSpan={2}
+                            align="center"
+                            sx={{
+                                minWidth: '160px',
+                                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                fontWeight: 600,
+                                padding: { xs: '8px 4px', sm: '12px 8px' },
+                                borderLeft: '1px solid rgba(224, 224, 224, 1)'
+                            }}
+                        >
+                            DE
+                        </TableCell>
+                        <TableCell
+                            colSpan={2}
+                            align="center"
+                            sx={{
+                                minWidth: '160px',
+                                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                fontWeight: 600,
+                                padding: { xs: '8px 4px', sm: '12px 8px' },
+                                borderLeft: '1px solid rgba(224, 224, 224, 1)'
+                            }}
+                        >
+                            NDE
+                        </TableCell>
+                        <TableCell
+                            align="center"
+                            sx={{
+                                minWidth: '100px',
+                                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                fontWeight: 600,
+                                padding: { xs: '8px 4px', sm: '12px 8px' },
+                                borderLeft: '1px solid rgba(224, 224, 224, 1)'
+                            }}
+                        >
+                            TYPE
+                        </TableCell>
                     </TableRow>
-                    <TableRow>
-                        <TableCell align="center">CONNECTION No.</TableCell>
-                        <TableCell>
+                    <TableRow sx={{ '&:hover': { backgroundColor: 'rgba(190, 221, 226, 0.1)' } }}>
+                        <TableCell
+                            align="center"
+                            sx={{
+                                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                fontWeight: 500,
+                                padding: { xs: '8px 4px', sm: '12px 8px' },
+                                backgroundColor: 'rgba(0, 0, 0, 0.02)'
+                            }}
+                        >
+                            CONNECTION No.
+                        </TableCell>
+                        <TableCell sx={{ padding: { xs: '8px 4px', sm: '12px 8px' } }}>
                             <TextField
                                 variant="standard"
                                 size="small"
@@ -1421,9 +1711,15 @@ const TempSensorBearingTable = memo(({ tempSensorsBearing, onChange }) => (
                                 type="text"
                                 value={tempSensorsBearing.de_connection_no1}
                                 onChange={(e) => onChange('de_connection_no1', e.target.value)}
+                                inputProps={{
+                                    style: {
+                                        fontSize: '0.875rem',
+                                        padding: '4px 0'
+                                    }
+                                }}
                             />
                         </TableCell>
-                        <TableCell>
+                        <TableCell sx={{ padding: { xs: '8px 4px', sm: '12px 8px' } }}>
                             <TextField
                                 variant="standard"
                                 size="small"
@@ -1431,9 +1727,15 @@ const TempSensorBearingTable = memo(({ tempSensorsBearing, onChange }) => (
                                 type="text"
                                 value={tempSensorsBearing.de_connection_no2}
                                 onChange={(e) => onChange('de_connection_no2', e.target.value)}
+                                inputProps={{
+                                    style: {
+                                        fontSize: '0.875rem',
+                                        padding: '4px 0'
+                                    }
+                                }}
                             />
                         </TableCell>
-                        <TableCell>
+                        <TableCell sx={{ padding: { xs: '8px 4px', sm: '12px 8px' } }}>
                             <TextField
                                 variant="standard"
                                 size="small"
@@ -1441,9 +1743,15 @@ const TempSensorBearingTable = memo(({ tempSensorsBearing, onChange }) => (
                                 type="text"
                                 value={tempSensorsBearing.nde_connection_no1}
                                 onChange={(e) => onChange('nde_connection_no1', e.target.value)}
+                                inputProps={{
+                                    style: {
+                                        fontSize: '0.875rem',
+                                        padding: '4px 0'
+                                    }
+                                }}
                             />
                         </TableCell>
-                        <TableCell>
+                        <TableCell sx={{ padding: { xs: '8px 4px', sm: '12px 8px' } }}>
                             <TextField
                                 variant="standard"
                                 size="small"
@@ -1451,9 +1759,21 @@ const TempSensorBearingTable = memo(({ tempSensorsBearing, onChange }) => (
                                 type="text"
                                 value={tempSensorsBearing.nde_connection_no2}
                                 onChange={(e) => onChange('nde_connection_no2', e.target.value)}
+                                inputProps={{
+                                    style: {
+                                        fontSize: '0.875rem',
+                                        padding: '4px 0'
+                                    }
+                                }}
                             />
                         </TableCell>
-                        <TableCell rowSpan={2}>
+                        <TableCell
+                            rowSpan={2}
+                            sx={{
+                                padding: { xs: '8px 4px', sm: '12px 8px' },
+                                verticalAlign: 'middle'
+                            }}
+                        >
                             <TextField
                                 variant="standard"
                                 size="small"
@@ -1461,12 +1781,31 @@ const TempSensorBearingTable = memo(({ tempSensorsBearing, onChange }) => (
                                 type="text"
                                 value={tempSensorsBearing.sensor_type}
                                 onChange={(e) => onChange('sensor_type', e.target.value)}
+                                inputProps={{
+                                    style: {
+                                        fontSize: '0.875rem',
+                                        padding: '4px 0'
+                                    }
+                                }}
                             />
                         </TableCell>
                     </TableRow>
-                    <TableRow>
-                        <TableCell align="center">RESISTANCE (Ω)</TableCell>
-                        <TableCell colSpan={2}>
+                    <TableRow sx={{ '&:hover': { backgroundColor: 'rgba(190, 221, 226, 0.1)' } }}>
+                        <TableCell
+                            align="center"
+                            sx={{
+                                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                fontWeight: 500,
+                                padding: { xs: '8px 4px', sm: '12px 8px' },
+                                backgroundColor: 'rgba(0, 0, 0, 0.02)'
+                            }}
+                        >
+                            RESISTANCE (Ω)
+                        </TableCell>
+                        <TableCell
+                            colSpan={2}
+                            sx={{ padding: { xs: '8px 4px', sm: '12px 8px' } }}
+                        >
                             <TextField
                                 variant="standard"
                                 size="small"
@@ -1474,10 +1813,20 @@ const TempSensorBearingTable = memo(({ tempSensorsBearing, onChange }) => (
                                 type="number"
                                 value={tempSensorsBearing.de_resistance}
                                 onChange={(e) => onChange('de_resistance', e.target.value)}
-                                inputProps={{ step: "0.01", min: "0" }}
+                                inputProps={{
+                                    step: "0.01",
+                                    min: "0",
+                                    style: {
+                                        fontSize: '0.875rem',
+                                        padding: '4px 0'
+                                    }
+                                }}
                             />
                         </TableCell>
-                        <TableCell colSpan={2}>
+                        <TableCell
+                            colSpan={2}
+                            sx={{ padding: { xs: '8px 4px', sm: '12px 8px' } }}
+                        >
                             <TextField
                                 variant="standard"
                                 size="small"
@@ -1485,7 +1834,14 @@ const TempSensorBearingTable = memo(({ tempSensorsBearing, onChange }) => (
                                 type="number"
                                 value={tempSensorsBearing.nde_resistance}
                                 onChange={(e) => onChange('nde_resistance', e.target.value)}
-                                inputProps={{ step: "0.01", min: "0" }}
+                                inputProps={{
+                                    step: "0.01",
+                                    min: "0",
+                                    style: {
+                                        fontSize: '0.875rem',
+                                        padding: '4px 0'
+                                    }
+                                }}
                             />
                         </TableCell>
                     </TableRow>
@@ -1593,30 +1949,94 @@ const TempSensorStatorTable = memo(({ tempSensorsStator, onChange, onBulkUpdate 
             sx={{
                 mb: 2,
                 overflowX: 'auto',
-                '& .MuiTable-root': {
-                    minWidth: '900px'
-                }
+                maxWidth: '100%',
+                '&::-webkit-scrollbar': {
+                    height: '8px',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                    backgroundColor: '#bedde2',
+                    borderRadius: '4px',
+                },
             }}
         >
-            <Table>
+            <Table sx={{ minWidth: 900 }}>
                 <TableHead sx={{ backgroundColor: '#bedde2' }}>
                     <TableRow>
-                        <TableCell colSpan={14} align="center">TEMPERATURE SENSOR (STATOR)</TableCell>
+                        <TableCell
+                            colSpan={14}
+                            align="center"
+                            sx={{
+                                fontSize: { xs: '0.875rem', sm: '1rem' },
+                                fontWeight: 'bold',
+                                padding: { xs: '12px 8px', sm: '16px' }
+                            }}
+                        >
+                            TEMPERATURE SENSOR (STATOR)
+                        </TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                    <TableRow>
-                        <TableCell align="center">ELEMENT ITEM</TableCell>
+                    <TableRow sx={{ backgroundColor: 'rgba(190, 221, 226, 0.3)' }}>
+                        <TableCell
+                            align="center"
+                            sx={{
+                                minWidth: '120px',
+                                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                fontWeight: 600,
+                                padding: { xs: '8px 4px', sm: '12px 8px' }
+                            }}
+                        >
+                            ELEMENT ITEM
+                        </TableCell>
                         {[1, 2, 3, 4, 5, 6].map(num => (
-                            <TableCell key={num} align="center" colSpan={2}>{num}</TableCell>
+                            <TableCell
+                                key={num}
+                                align="center"
+                                colSpan={2}
+                                sx={{
+                                    minWidth: '140px',
+                                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                    fontWeight: 600,
+                                    padding: { xs: '8px 4px', sm: '12px 8px' },
+                                    borderLeft: num > 1 ? '1px solid rgba(224, 224, 224, 1)' : 'none'
+                                }}
+                            >
+                                {num}
+                            </TableCell>
                         ))}
-                        <TableCell align="center">TYPE</TableCell>
+                        <TableCell
+                            align="center"
+                            sx={{
+                                minWidth: '100px',
+                                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                fontWeight: 600,
+                                padding: { xs: '8px 4px', sm: '12px 8px' },
+                                borderLeft: '1px solid rgba(224, 224, 224, 1)'
+                            }}
+                        >
+                            TYPE
+                        </TableCell>
                     </TableRow>
-                    <TableRow>
-                        <TableCell align="center">CONNECTION No.</TableCell>
+                    <TableRow sx={{ '&:hover': { backgroundColor: 'rgba(190, 221, 226, 0.1)' } }}>
+                        <TableCell
+                            align="center"
+                            sx={{
+                                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                fontWeight: 500,
+                                padding: { xs: '8px 4px', sm: '12px 8px' },
+                                backgroundColor: 'rgba(0, 0, 0, 0.02)'
+                            }}
+                        >
+                            CONNECTION No.
+                        </TableCell>
                         {tempSensorsStator.map((sensor, index) => (
                             <React.Fragment key={index}>
-                                <TableCell>
+                                <TableCell
+                                    sx={{
+                                        padding: { xs: '8px 4px', sm: '12px 8px' },
+                                        minWidth: '70px'
+                                    }}
+                                >
                                     <TextField
                                         variant="standard"
                                         size="small"
@@ -1624,9 +2044,20 @@ const TempSensorStatorTable = memo(({ tempSensorsStator, onChange, onBulkUpdate 
                                         type="text"
                                         value={sensor.connection_no1}
                                         onChange={(e) => onChange(index, 'connection_no1', e.target.value)}
+                                        inputProps={{
+                                            style: {
+                                                fontSize: '0.875rem',
+                                                padding: '4px 0'
+                                            }
+                                        }}
                                     />
                                 </TableCell>
-                                <TableCell>
+                                <TableCell
+                                    sx={{
+                                        padding: { xs: '8px 4px', sm: '12px 8px' },
+                                        minWidth: '70px'
+                                    }}
+                                >
                                     <TextField
                                         variant="standard"
                                         size="small"
@@ -1634,11 +2065,23 @@ const TempSensorStatorTable = memo(({ tempSensorsStator, onChange, onBulkUpdate 
                                         type="text"
                                         value={sensor.connection_no2}
                                         onChange={(e) => onChange(index, 'connection_no2', e.target.value)}
+                                        inputProps={{
+                                            style: {
+                                                fontSize: '0.875rem',
+                                                padding: '4px 0'
+                                            }
+                                        }}
                                     />
                                 </TableCell>
                             </React.Fragment>
                         ))}
-                        <TableCell rowSpan={2}>
+                        <TableCell
+                            rowSpan={2}
+                            sx={{
+                                padding: { xs: '8px 4px', sm: '12px 8px' },
+                                verticalAlign: 'middle'
+                            }}
+                        >
                             <TextField
                                 variant="standard"
                                 size="small"
@@ -1646,13 +2089,35 @@ const TempSensorStatorTable = memo(({ tempSensorsStator, onChange, onBulkUpdate 
                                 type="text"
                                 value={tempSensorsStator[0].sensor_type}
                                 onChange={(e) => onBulkUpdate('sensor_type', e.target.value)}
+                                inputProps={{
+                                    style: {
+                                        fontSize: '0.875rem',
+                                        padding: '4px 0'
+                                    }
+                                }}
                             />
                         </TableCell>
                     </TableRow>
-                    <TableRow>
-                        <TableCell align="center">RESISTANCE (Ω)</TableCell>
+                    <TableRow sx={{ '&:hover': { backgroundColor: 'rgba(190, 221, 226, 0.1)' } }}>
+                        <TableCell
+                            align="center"
+                            sx={{
+                                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                fontWeight: 500,
+                                padding: { xs: '8px 4px', sm: '12px 8px' },
+                                backgroundColor: 'rgba(0, 0, 0, 0.02)'
+                            }}
+                        >
+                            RESISTANCE (Ω)
+                        </TableCell>
                         {tempSensorsStator.map((sensor, index) => (
-                            <TableCell key={index} colSpan={2}>
+                            <TableCell
+                                key={index}
+                                colSpan={2}
+                                sx={{
+                                    padding: { xs: '8px 4px', sm: '12px 8px' }
+                                }}
+                            >
                                 <TextField
                                     variant="standard"
                                     size="small"
@@ -1660,7 +2125,14 @@ const TempSensorStatorTable = memo(({ tempSensorsStator, onChange, onBulkUpdate 
                                     type="number"
                                     value={sensor.resistance}
                                     onChange={(e) => onChange(index, 'resistance', e.target.value)}
-                                    inputProps={{ step: "0.01", min: "0" }}
+                                    inputProps={{
+                                        step: "0.01",
+                                        min: "0",
+                                        style: {
+                                            fontSize: '0.875rem',
+                                            padding: '4px 0'
+                                        }
+                                    }}
                                 />
                             </TableCell>
                         ))}
@@ -1669,25 +2141,58 @@ const TempSensorStatorTable = memo(({ tempSensorsStator, onChange, onBulkUpdate 
             </Table>
         </TableContainer>
 
-        <FormGroup row sx={{ alignItems: 'center' }}>
-            <Typography sx={{ mr: 2 }}>Result:</Typography>
+        <FormGroup
+            row
+            sx={{
+                alignItems: 'center',
+                flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                gap: { xs: 1, sm: 0 }
+            }}
+        >
+            <Typography
+                sx={{
+                    mr: { xs: 1, sm: 2 },
+                    fontSize: { xs: '0.875rem', sm: '1rem' },
+                    fontWeight: 500
+                }}
+            >
+                Result:
+            </Typography>
             <FormControlLabel
                 control={
                     <Checkbox
                         checked={tempSensorsStator[0].result_status === 'Normal'}
                         onChange={(e) => onBulkUpdate('result_status', e.target.checked ? 'Normal' : 'Abnormal')}
+                        sx={{
+                            '& .MuiSvgIcon-root': {
+                                fontSize: { xs: '1.2rem', sm: '1.5rem' }
+                            }
+                        }}
                     />
                 }
-                label="Normal"
+                label={
+                    <Typography sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
+                        Normal
+                    </Typography>
+                }
             />
             <FormControlLabel
                 control={
                     <Checkbox
                         checked={tempSensorsStator[0].result_status === 'Abnormal'}
                         onChange={(e) => onBulkUpdate('result_status', e.target.checked ? 'Abnormal' : 'Normal')}
+                        sx={{
+                            '& .MuiSvgIcon-root': {
+                                fontSize: { xs: '1.2rem', sm: '1.5rem' }
+                            }
+                        }}
                     />
                 }
-                label="Abnormal"
+                label={
+                    <Typography sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
+                        Abnormal
+                    </Typography>
+                }
             />
         </FormGroup>
     </>
@@ -1696,39 +2201,86 @@ TempSensorStatorTable.displayName = 'TempSensorStatorTable';
 
 // 14. Conclusion Section
 const ConclusionSection = memo(({ header, onChange }) => (
-    <>
-        <Typography variant="subtitle1">4. Conclusion and recommendation.</Typography>
-        <Grid container spacing={2} sx={{ mb: 2 }}>
+    <Box sx={{ mb: 4 }}>
+        <Typography
+            variant="subtitle1"
+            sx={{
+                mb: 2,
+                fontSize: { xs: '1rem', sm: '1.1rem' },
+                fontWeight: 600
+            }}
+        >
+            4. Conclusion and recommendation.
+        </Typography>
+        <Grid container spacing={2}>
             <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                     fullWidth
-                    label="Conclusion :"
+                    label="Conclusion"
                     multiline
                     rows={4}
                     value={header.conclusion}
                     onChange={(e) => onChange('conclusion', e.target.value)}
+                    variant="outlined"
+                    sx={{
+                        '& .MuiInputBase-root': {
+                            fontSize: { xs: '0.875rem', sm: '1rem' }
+                        },
+                        '& .MuiInputLabel-root': {
+                            fontSize: { xs: '0.875rem', sm: '1rem' }
+                        }
+                    }}
                 />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                     fullWidth
-                    label="Recommendation :"
+                    label="Recommendation"
                     multiline
                     rows={4}
                     value={header.recommendation}
                     onChange={(e) => onChange('recommendation', e.target.value)}
+                    variant="outlined"
+                    sx={{
+                        '& .MuiInputBase-root': {
+                            fontSize: { xs: '0.875rem', sm: '1rem' }
+                        },
+                        '& .MuiInputLabel-root': {
+                            fontSize: { xs: '0.875rem', sm: '1rem' }
+                        }
+                    }}
                 />
             </Grid>
         </Grid>
-    </>
+    </Box>
 ));
 ConclusionSection.displayName = 'ConclusionSection';
 
 // 15. Result Table Section
 const ResultTableSection = memo(({ status, header, onStatusChange, onHeaderChange, getBackgroundColor }) => (
-    <>
-        <Grid size={{ xs: 12 }} alignItems={'center'} display={'flex'} flexDirection={'column'} mb={5}>
-            <Typography variant="h5">RESULT:</Typography>
+    <Box sx={{ mb: 4 }}>
+        {/* Result Status Selection */}
+        <Box
+            sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                mb: 4,
+                p: { xs: 2, sm: 3 },
+                backgroundColor: 'rgba(190, 221, 226, 0.1)',
+                borderRadius: 2
+            }}
+        >
+            <Typography
+                variant="h5"
+                sx={{
+                    mb: 2,
+                    fontSize: { xs: '1.25rem', sm: '1.5rem' },
+                    fontWeight: 700
+                }}
+            >
+                RESULT:
+            </Typography>
             <FormControl>
                 <Select
                     value={status}
@@ -1737,12 +2289,23 @@ const ResultTableSection = memo(({ status, header, onStatusChange, onHeaderChang
                         backgroundColor: getBackgroundColor(status),
                         color: status ? 'white' : 'inherit',
                         fontWeight: 'bold',
-                        fontSize: '1.3rem',
-                        minHeight: '80px',
-                        width: '200px',
+                        fontSize: { xs: '1.1rem', sm: '1.3rem' },
+                        minHeight: { xs: '60px', sm: '80px' },
+                        width: { xs: '180px', sm: '220px' },
                         textAlign: 'center',
+                        borderRadius: 2,
                         '& .MuiSelect-select': {
-                            padding: '20px',
+                            padding: { xs: '16px', sm: '20px' },
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        },
+                        '& .MuiOutlinedInput-notchedOutline': {
+                            borderWidth: '2px',
+                            borderColor: status ? 'transparent' : 'rgba(0, 0, 0, 0.23)'
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: status ? 'transparent' : 'rgba(0, 0, 0, 0.4)'
                         }
                     }}
                 >
@@ -1751,27 +2314,95 @@ const ResultTableSection = memo(({ status, header, onStatusChange, onHeaderChang
                     <MenuItem value="D">D - Danger</MenuItem>
                 </Select>
             </FormControl>
-        </Grid>
-        <TableContainer>
-            <Table>
+        </Box>
+
+        {/* Inspector Information Table */}
+        <TableContainer
+            component={Paper}
+            sx={{
+                overflowX: 'auto',
+                boxShadow: 2,
+                '&::-webkit-scrollbar': {
+                    height: '8px',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                    backgroundColor: '#bedde2',
+                    borderRadius: '4px',
+                },
+            }}
+        >
+            <Table sx={{ minWidth: 500 }}>
                 <TableHead>
-                    <TableRow>
-                        <TableCell>
-                            <Typography variant="h5" align="center">DESCRIPTION</Typography>
+                    <TableRow sx={{ backgroundColor: '#bedde2' }}>
+                        <TableCell
+                            sx={{
+                                width: { xs: '35%', sm: '40%' },
+                                padding: { xs: '12px 8px', sm: '16px' }
+                            }}
+                        >
+                            <Typography
+                                variant="h6"
+                                align="center"
+                                sx={{
+                                    fontSize: { xs: '0.95rem', sm: '1.15rem' },
+                                    fontWeight: 700
+                                }}
+                            >
+                                DESCRIPTION
+                            </Typography>
                         </TableCell>
-                        <TableCell>
-                            <Typography variant="h5" align="center">TESTED AND INSPECTED BY</Typography>
+                        <TableCell
+                            sx={{
+                                padding: { xs: '12px 8px', sm: '16px' }
+                            }}
+                        >
+                            <Typography
+                                variant="h6"
+                                align="center"
+                                sx={{
+                                    fontSize: { xs: '0.95rem', sm: '1.15rem' },
+                                    fontWeight: 700
+                                }}
+                            >
+                                TESTED AND INSPECTED BY
+                            </Typography>
                         </TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                    <TableRow>
-                        <TableCell>Company Name</TableCell>
-                        <TableCell align="center">U-SERVICES (THAILAND) CO.,LTD</TableCell>
+                    <TableRow sx={{ '&:hover': { backgroundColor: 'rgba(190, 221, 226, 0.1)' } }}>
+                        <TableCell
+                            sx={{
+                                fontSize: { xs: '0.875rem', sm: '1rem' },
+                                fontWeight: 600,
+                                padding: { xs: '12px 8px', sm: '16px' },
+                                backgroundColor: 'rgba(0, 0, 0, 0.02)'
+                            }}
+                        >
+                            Company Name
+                        </TableCell>
+                        <TableCell
+                            align="center"
+                            sx={{
+                                fontSize: { xs: '0.875rem', sm: '1rem' },
+                                padding: { xs: '12px 8px', sm: '16px' }
+                            }}
+                        >
+                            U-SERVICES (THAILAND) CO.,LTD
+                        </TableCell>
                     </TableRow>
-                    <TableRow>
-                        <TableCell>Name-Surname</TableCell>
-                        <TableCell>
+                    <TableRow sx={{ '&:hover': { backgroundColor: 'rgba(190, 221, 226, 0.1)' } }}>
+                        <TableCell
+                            sx={{
+                                fontSize: { xs: '0.875rem', sm: '1rem' },
+                                fontWeight: 600,
+                                padding: { xs: '12px 8px', sm: '16px' },
+                                backgroundColor: 'rgba(0, 0, 0, 0.02)'
+                            }}
+                        >
+                            Name-Surname
+                        </TableCell>
+                        <TableCell sx={{ padding: { xs: '12px 8px', sm: '16px' } }}>
                             <TextField
                                 variant="standard"
                                 size="small"
@@ -1779,37 +2410,85 @@ const ResultTableSection = memo(({ status, header, onStatusChange, onHeaderChang
                                 type="text"
                                 value={header.inspector_name}
                                 inputProps={{
-                                    style: { textAlign: 'center' }
+                                    style: {
+                                        textAlign: 'center',
+                                        fontSize: '0.95rem'
+                                    }
                                 }}
                                 onChange={(e) => onHeaderChange('inspector_name', e.target.value)}
                             />
                         </TableCell>
                     </TableRow>
-                    <TableRow>
-                        <TableCell>Signature</TableCell>
-                        <TableCell align="center">
-                            <SignaturePad
-                                value={header.inspector_signature}
-                                onChange={(value) => onHeaderChange('inspector_signature', value)}
-                            />
+                    <TableRow sx={{ '&:hover': { backgroundColor: 'rgba(190, 221, 226, 0.1)' } }}>
+                        <TableCell
+                            sx={{
+                                fontSize: { xs: '0.875rem', sm: '1rem' },
+                                fontWeight: 600,
+                                padding: { xs: '12px 8px', sm: '16px' },
+                                backgroundColor: 'rgba(0, 0, 0, 0.02)'
+                            }}
+                        >
+                            Signature
+                        </TableCell>
+                        <TableCell
+                            align="center"
+                            sx={{
+                                padding: { xs: '12px 8px', sm: '16px' }
+                            }}
+                        >
+                            <Box sx={{
+                                display: 'flex',
+                                justifyContent: 'center',
+                                width: '100%'
+                            }}>
+                                <SignaturePad
+                                    value={header.inspector_signature}
+                                    onChange={(value) => onHeaderChange('inspector_signature', value)}
+                                />
+                            </Box>
                         </TableCell>
                     </TableRow>
-                    <TableRow>
-                        <TableCell>Date</TableCell>
-                        <TableCell align="center">
+                    <TableRow sx={{ '&:hover': { backgroundColor: 'rgba(190, 221, 226, 0.1)' } }}>
+                        <TableCell
+                            sx={{
+                                fontSize: { xs: '0.875rem', sm: '1rem' },
+                                fontWeight: 600,
+                                padding: { xs: '12px 8px', sm: '16px' },
+                                backgroundColor: 'rgba(0, 0, 0, 0.02)'
+                            }}
+                        >
+                            Date
+                        </TableCell>
+                        <TableCell
+                            align="center"
+                            sx={{
+                                padding: { xs: '12px 8px', sm: '16px' }
+                            }}
+                        >
                             <DatePicker
                                 format="DD/MM/YYYY"
-                                label="Inspection Date :"
+                                label="Inspection Date"
                                 value={header.inspection_completed_date}
                                 onChange={(newValue) => onHeaderChange('inspection_completed_date', newValue)}
-                                slotProps={{ textField: { variant: 'standard', fullWidth: true } }}
+                                slotProps={{
+                                    textField: {
+                                        variant: 'standard',
+                                        fullWidth: true,
+                                        sx: {
+                                            '& .MuiInputBase-input': {
+                                                textAlign: 'center',
+                                                fontSize: { xs: '0.875rem', sm: '1rem' }
+                                            }
+                                        }
+                                    }
+                                }}
                             />
                         </TableCell>
                     </TableRow>
                 </TableBody>
             </Table>
         </TableContainer>
-    </>
+    </Box>
 ));
 ResultTableSection.displayName = 'ResultTableSection';
 

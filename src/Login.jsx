@@ -19,7 +19,6 @@ import { Eye, EyeOff, Lock } from 'lucide-react'; // เพิ่ม Eye, EyeOff
 import LoadingMechanic from './components/LoadingBackdrop';
 
 const Login = ({ onLogin }) => {
-    /* const apiHost = import.meta.env.VITE_API_HOST; */
     const apiHost = import.meta.env.VITE_API_HOST;
 
     if (!apiHost) {
@@ -54,7 +53,7 @@ const Login = ({ onLogin }) => {
                 sessionStorage.setItem('usvt_user_key', data.user_key);
                 sessionStorage.setItem('usvt_lang', data.user_language);
                 sessionStorage.setItem('usvt_photo', data.user_photo || ''); // ✅ บันทึกชื่อไฟล์ภาพ
-                sessionStorage.setItem('usvt_role', data.u_role); // ✅ บันทึกชื่อไฟล์ภาพ
+                sessionStorage.setItem('usvt_role', data.u_role);
 
                 await new Promise(resolve => setTimeout(resolve, 500));
                 onLogin(data);
@@ -96,18 +95,18 @@ const Login = ({ onLogin }) => {
                 }}
             >
                 <Box display="flex" flexDirection="column" alignItems="center">
-                    {/* <img
+                    <img
                         src="/img/U-LOGO.png"
                         alt="Logo"
                         width="120"
                         height="auto"
                         style={{ marginBottom: 16 }}
-                    /> */}
+                    />
                     <Avatar sx={{ m: 1, bgcolor: '#ff9800' }}>
                         <Lock size={20} />
                     </Avatar>
                     <Typography component="h1" variant="h5">
-                        เข้าสู่ระบบงาน
+                        เข้าสู่ระบบงาน PM
                     </Typography>
                     <Box
                         component="form"
@@ -211,15 +210,12 @@ const Login = ({ onLogin }) => {
                 onClose={() => setErrorOpen(false)}
                 anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
             >
-
                 <Alert severity="error" onClose={() => setErrorOpen(false)}>
                     ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง
                 </Alert>
             </Snackbar>
-
             {/* โหลดเข้าสู่ระบบแบบ overlay */}
             <LoadingMechanic open={loading} message="กำลังเข้าสู่ระบบ..." />
-
         </Container>
     );
 };

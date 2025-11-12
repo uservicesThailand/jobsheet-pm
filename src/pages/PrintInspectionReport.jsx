@@ -3,8 +3,19 @@ import { useParams } from 'react-router-dom';
 import FloatingActionButtons from '../components/FloatingActionButtons';
 
 const apiHost = import.meta.env.VITE_API_HOST || '';
+
+// Helper function สำหรับจัดการค่าว่าง
+const displayValue = (value, defaultValue = '-') => {
+    if (value === null || value === undefined || value === '') {
+        return defaultValue;
+    }
+    return value;
+};
+
+
+
 const formatDate = (dateString) => {
-    if (!dateString) return '';
+    if (!dateString) return '-';
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
         year: 'numeric',
@@ -18,6 +29,11 @@ export default function PrintSCMReport() {
     const [data, setData] = useState(null);
     const [err, setErr] = useState('');
     const { inspNo } = useParams();
+    const [zoom, setZoom] = useState(1);
+
+    const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.1, 2));
+    const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.1, 0.3));
+    const handleResetZoom = () => setZoom(1);
 
     const fetchReport = async () => {
         setLoading(true);
@@ -59,7 +75,7 @@ export default function PrintSCMReport() {
     <style>
       @page {
         size: A4;
-        margin: 0;
+        margin: 20px;
       }
       
       * {
@@ -69,13 +85,14 @@ export default function PrintSCMReport() {
       }
       
       html, body {
-        width: 210mm;
-        height: 297mm;
+        width: 100%;
+        height: 100%;
         margin: 0;
         padding: 0;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
         color-adjust: exact;
+        background: white;
       }
       
       body {
@@ -89,6 +106,9 @@ export default function PrintSCMReport() {
         page-break-inside: avoid;
         position: relative;
         overflow: hidden;
+        background: white;
+        border: 2px solid #000;
+        box-sizing: border-box;
       }
       
       .page:last-child {
@@ -97,14 +117,15 @@ export default function PrintSCMReport() {
       
       @media print {
         html, body {
-          width: 210mm;
-          height: 297mm;
+          width: 100%;
+          height: 100%;
+          background: white;
         }
         
         .page {
           margin: 0;
-          border: none;
           page-break-after: always;
+          box-shadow: none;
         }
       }
       
@@ -117,7 +138,6 @@ export default function PrintSCMReport() {
         .page {
           margin: 0 auto 20px;
           box-shadow: 0 0 10px rgba(0,0,0,0.1);
-          background: white;
         }
       }
           ${printContent.querySelector('style')?.textContent || ''}
@@ -140,8 +160,6 @@ export default function PrintSCMReport() {
         }, 500);
     };
 
-
-
     if (loading) {
         return (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
@@ -155,40 +173,44 @@ export default function PrintSCMReport() {
     }
 
     return (
-        <div style={{ backgroundColor: '#f0f0f0', minHeight: '100vh', padding: '10px' }}>
-            <style>{`
-                @media print {
-                    .no-print {
-                        display: none !important;
-                    }
-                    body {
-                        background: white !important;
-                        padding: 0 !important;
-                    }
-                }
-                
-                @media screen and (max-width: 1024px) {
-                    #pdf-content {
-                        transform: scale(0.5);
-                        transform-origin: top center;
-                    }
-                }
-                
-                @media screen and (max-width: 768px) {
-                    #pdf-content {
-                        transform: scale(0.4);
-                        transform-origin: top center;
-                    }
-                }
-                
-                @media screen and (max-width: 480px) {
-                    #pdf-content {
-                        transform: scale(0.3);
-                        transform-origin: top center;
-                    }
-                }
-            `}</style>
 
+        <div style={{ backgroundColor: '#f0f0f0', minHeight: '100vh', padding: '20px' }}>  {/* เพิ่ม padding */}
+            <style>{`
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        body {
+            background: white !important;
+            padding: 0 !important;
+        }
+    }
+    
+    #pdf-content {
+        transition: transform 0.2s ease;
+    }
+    
+    @media screen and (min-width: 769px) and (max-width: 1024px) {
+        #pdf-content {
+            transform: scale(calc(0.85 * var(--zoom-level, 1)));
+            transform-origin: top center;
+        }
+    }
+    
+    @media screen and (max-width: 768px) {
+        #pdf-content {
+            transform: scale(calc(0.6 * var(--zoom-level, 1)));
+            transform-origin: top center;
+        }
+    }
+    
+    @media screen and (max-width: 480px) {
+        #pdf-content {
+            transform: scale(calc(0.45 * var(--zoom-level, 1)));
+            transform-origin: top center;
+        }
+    }
+`}</style>
             {/*  <div className="no-print" style={{
                 position: 'sticky',
                 top: 0,
@@ -266,11 +288,19 @@ export default function PrintSCMReport() {
                 onPrint={handlePrint}
                 /* onDownloadPDF={handleDownloadPDF} */
                 onReload={fetchReport}
+                onZoomIn={handleZoomIn}
+                onZoomOut={handleZoomOut}
+                onResetZoom={handleResetZoom}
+                currentZoom={zoom}
             />
 
-            <div id="pdf-content" style={{ maxWidth: '210mm', margin: '0 auto' }}>
+            <div id="pdf-content" style={{
+                maxWidth: '210mm',
+                margin: '0 auto',
+                '--zoom-level': zoom
+            }}>
                 <SCMInspectionForm data={data} inspNo={inspNo} />
-                <SCMBeforeAfterImagesPage inspNo={inspNo} />
+                <SCMBeforeAfterImagesPage inspNo={inspNo} dataTag={data.tag_no} />
             </div>
         </div>
     );
@@ -295,12 +325,17 @@ function SCMInspectionForm({ data, inspNo }) {
                 setHeaderImageLoading(true);
 
                 // Fetch เฉพาะรูป header (SCMHeader)
-                const headerRes = await fetch(`${apiHost}/api/forms/FormScmImage/${inspNo}?location=SCMHeader`);
+                const headerRes = await fetch(`${apiHost}/api/forms/FormScmImage/${inspNo}?location=SCMHeader&del=0`);
                 const headerJson = await headerRes.json();
 
                 if (headerJson.success && headerJson.data) {
+                    // กรอง del = 0 ก่อน
+                    const filteredData = Array.isArray(headerJson.data)
+                        ? headerJson.data.filter(img => img.del === 0)
+                        : (headerJson.data.del === 0 ? headerJson.data : null);
+
                     // ถ้าเป็น array ให้เอาตัวแรก
-                    setHeaderImage(Array.isArray(headerJson.data) ? headerJson.data[0] : headerJson.data);
+                    setHeaderImage(Array.isArray(filteredData) ? filteredData[0] : filteredData);
                 } else {
                     setHeaderImage(null);
                 }
@@ -370,9 +405,10 @@ function SCMInspectionForm({ data, inspNo }) {
         }
         .bordered-section {
           border: 2px solid #000;
-          padding: 8px;
-          margin-bottom: 8px;
+          padding: 6px;
+          margin-bottom: 6px;
         }
+
       `}</style>
 
             {/* Title */}
@@ -398,14 +434,14 @@ function SCMInspectionForm({ data, inspNo }) {
             </div>
 
             {/* Customer Info */}
-            <table className="excel-table" style={{ marginBottom: '10px' }}>
+            <table className="bordered-section" style={{ width: '100%' }}>
                 <tbody>
                     <tr>
                         <td className="label-cell" style={{ width: '40%' }}>
-                            Customer : <span style={{ fontWeight: 'bold' }}>{data?.customer_name || ''}</span>
+                            Customer : <span style={{ fontWeight: 'bold' }}>{displayValue(data?.customer_name)}</span>
                         </td>
                         <td className="label-cell" style={{ width: '25%' }}>
-                            Job No : <span style={{ fontWeight: 'bold' }}>{data?.job_no || ''}</span>
+                            Job No : <span style={{ fontWeight: 'bold' }}>{displayValue(data?.job_no)}</span>
                         </td>
                         <td className="label-cell" style={{ width: '35%' }}>
                             Inspection Date : <span style={{ fontWeight: 'bold' }}>{formatDate(data?.inspection_date)}</span>
@@ -413,13 +449,13 @@ function SCMInspectionForm({ data, inspNo }) {
                     </tr>
                     <tr>
                         <td className="label-cell">
-                            Attention : <span style={{ fontWeight: 'bold' }}>{data?.attention || ''}</span>
+                            Attention : <span style={{ fontWeight: 'bold' }}>{displayValue(data?.attention)}</span>
                         </td>
                         <td className="label-cell">
-                            Tag No : <span style={{ fontWeight: 'bold' }}>{data?.tag_no || ''}</span>
+                            Tag No : <span style={{ fontWeight: 'bold' }}>{displayValue(data?.tag_no)}</span>
                         </td>
                         <td className="label-cell">
-                            Name : <span style={{ fontWeight: 'bold' }}>{data?.equipment_name || ''}</span>
+                            Name : <span style={{ fontWeight: 'bold' }}>{displayValue(data?.equipment_name)}</span>
                         </td>
                     </tr>
                 </tbody>
@@ -435,89 +471,100 @@ function SCMInspectionForm({ data, inspNo }) {
                 </thead>
                 <tbody>
                     <tr>
-                        <td className="label-cell">Manufacture : {data?.fmn_manufacture || ''}</td>
-                        <td className="label-cell">Frame /Model : {data?.fmn_model || ''}</td>
-                        <td className="label-cell" colSpan="2">Type : {data?.fmn_type || ''}</td>
+                        <td className="label-cell">Manufacture : {displayValue(data?.fmn_manufacture)}</td>
+                        <td className="label-cell">Frame /Model : {displayValue(data?.fmn_model)}</td>
+                        <td className="label-cell" colSpan="2">Type : {displayValue(data?.fmn_type)}</td>
                         <td className="label-cell" rowSpan="6" style={{ verticalAlign: 'top' }}>
-                            <div>EQUIPMENT : {data?.scm_de_equipment_type || ''}</div>
-                            <div style={{ marginTop: '5px' }}>MANUFACTORY : {data?.scm_de_manufactory || ''}</div>
-                            <div style={{ marginTop: '5px' }}>TAG NO. : {data?.scm_de_tag_no || ''}</div>
-                            <div style={{ marginTop: '5px' }}>SPEED : {data?.scm_de_speed || ''} {data?.scm_de_speed_unit || 'RPM'}</div>
-                            <div style={{ marginTop: '5px' }}>DE BRG. : {data?.scm_de_de_bearing || ''}</div>
-                            <div style={{ marginTop: '5px' }}>NDE BRG. : {data?.scm_de_nde_bearing || ''}</div>
+                            <div>EQUIPMENT : {displayValue(data?.scm_de_equipment_type)}</div>
+                            <div style={{ marginTop: '5px' }}>MANUFACTORY : {displayValue(data?.scm_de_manufactory)}</div>
+                            <div style={{ marginTop: '5px' }}>TAG NO. : {displayValue(data?.scm_de_tag_no)}</div>
+                            <div style={{ marginTop: '5px' }}>SPEED : {displayValue(data?.scm_de_speed)} {displayValue(data?.scm_de_speed_unit, 'RPM')}</div>
+                            <div style={{ marginTop: '5px' }}>DE BRG. : {displayValue(data?.scm_de_de_bearing)}</div>
+                            <div style={{ marginTop: '5px' }}>NDE BRG. : {displayValue(data?.scm_de_nde_bearing)}</div>
                         </td>
                     </tr>
                     <tr>
-                        <td className="label-cell">Power : {data?.fmn_power || ''} {data?.fmn_power_unit || 'kW'}</td>
-                        <td className="label-cell">Speed : {data?.fmn_speed || ''} {data?.fmn_speed_unit || 'RPM'}</td>
-                        <td className="label-cell" colSpan="2">Ser.No. : {data?.fmn_ser_no || ''}</td>
+                        <td className="label-cell">Power : {displayValue(data?.fmn_power)} {displayValue(data?.fmn_power_unit, 'kW')}</td>
+                        <td className="label-cell">Speed : {displayValue(data?.fmn_speed)} {displayValue(data?.fmn_speed_unit, 'RPM')}</td>
+                        <td className="label-cell" colSpan="2">Ser.No. : {displayValue(data?.fmn_ser_no)}</td>
                     </tr>
                     <tr>
-                        <td className="label-cell">Voltage : {data?.fmn_voltage || ''} V.</td>
-                        <td className="label-cell">Frequency : {data?.fmn_frequency || ''} Hz.</td>
-                        <td className="label-cell">Insulation Class : {data?.fmn_insulation_class || ''}</td>
-                        <td className="label-cell">Design : {data?.fmn_design || ''}</td>
+                        <td className="label-cell">Voltage : {displayValue(data?.fmn_voltage)} V.</td>
+                        <td className="label-cell">Frequency : {displayValue(data?.fmn_frequency)} Hz.</td>
+                        <td className="label-cell">Insulation Class : {displayValue(data?.fmn_insulation_class)}</td>
+                        <td className="label-cell">Design : {displayValue(data?.fmn_design)}</td>
                     </tr>
                     <tr>
-                        <td className="label-cell">Current : {data?.fmn_current || ''} A.</td>
-                        <td className="label-cell">Cos.φ : {data?.fmn_cos_phi || ''}</td>
-                        <td className="label-cell">Temp.Rise Class : {data?.fmn_temp_rise_class || ''}</td>
-                        <td className="label-cell">Duty : {data?.fmn_duty || ''}</td>
+                        <td className="label-cell">Current : {displayValue(data?.fmn_current)} A.</td>
+                        <td className="label-cell">Cos.φ : {displayValue(data?.fmn_cos_phi)}</td>
+                        <td className="label-cell">Temp.Rise Class : {displayValue(data?.fmn_temp_rise_class)}</td>
+                        <td className="label-cell">Duty : {displayValue(data?.fmn_duty)}</td>
                     </tr>
                     <tr>
-                        <td className="label-cell">DE Bearing : {data?.fmn_de_bearing || ''}</td>
-                        <td className="label-cell">NDE Bearing : {data?.fmn_nde_bearing || ''}</td>
-                        <td className="label-cell">IP : {data?.fmn_ip || ''}</td>
-                        <td className="label-cell">SF: {data?.fmn_sf || ''}</td>
+                        <td className="label-cell">DE Bearing : {displayValue(data?.fmn_de_bearing)}</td>
+                        <td className="label-cell">NDE Bearing : {displayValue(data?.fmn_nde_bearing)}</td>
+                        <td className="label-cell">IP : {displayValue(data?.fmn_ip)}</td>
+                        <td className="label-cell">SF: {displayValue(data?.fmn_sf)}</td>
                     </tr>
                 </tbody>
             </table>
 
             {/* Section 1 & 2 with border */}
-            <div className="bordered-section">
-                <div style={{ display: 'flex', gap: '10px' }}>
+            <div style={{ border: '2px solid #000', marginBottom: '6px' }}>
+                <div style={{ display: 'flex' }}>
                     {/* Left column */}
-                    <div style={{ flex: '1', borderRight: '2px solid #000', paddingRight: '10px' }}>
-                        <div className="section-header">1. General Information.</div>
-                        <div style={{ marginLeft: '15px', fontSize: '8pt', marginBottom: '5px' }}>
-                            <div style={{ marginBottom: '3px' }}>
-                                1.1 Motor Mounting: &nbsp;
-                                {checkbox(data?.scm_gi_mounting_flange == 1)} Flange mounted &nbsp;&nbsp;
-                                {checkbox(data?.scm_gi_mounting_foot == 1)} Foot mounted
-                            </div>
-                            <div>
-                                1.2 Driven Connection: &nbsp;
-                                {checkbox(data?.scm_gi_connection_coupling == 1)} Coupling &nbsp;&nbsp;
-                                {checkbox(data?.scm_gi_connection_gearbox == 1)} Gear box &nbsp;&nbsp;
-                                {checkbox(data?.scm_gi_connection_vbelt == 1)} V - Belt
+                    <div style={{ flex: '1', borderRight: '2px solid #000' }}>
+                        <div style={{ borderBottom: '2px solid #000', padding: '10px' }}>
+                            <div className="section-header">1. General Information.</div>
+                            <div style={{ marginLeft: '15px', fontSize: '8pt', marginBottom: '5px' }}>
+                                <div style={{ marginBottom: '3px' }}>
+                                    1.1 Motor Mounting: &nbsp;
+                                    {checkbox(data?.scm_gi_mounting_flange == 1)} Flange mounted &nbsp;&nbsp;
+                                    {checkbox(data?.scm_gi_mounting_foot == 1)} Foot mounted
+                                </div>
+                                <div>
+                                    1.2 Driven Connection: &nbsp;
+                                    {checkbox(data?.scm_gi_connection_coupling == 1)} Coupling &nbsp;&nbsp;
+                                    {checkbox(data?.scm_gi_connection_gearbox == 1)} Gear box &nbsp;&nbsp;
+                                    {checkbox(data?.scm_gi_connection_vbelt == 1)} V - Belt
+                                </div>
                             </div>
                         </div>
-                        <div className="section-header">2. General check.</div>
-                        <table>
-                            <tbody>
-                                {data?.generalChecks?.map((check, idx) => (
-                                    <tr key={idx}>
-                                        <td className="label-cell" style={{ width: '50%' }}>
-                                            2.{idx + 1} {check.scm_gc_check_item || check.check_item}
-                                        </td>
-                                        <td className="label-cell" style={{ width: '30%' }}>
-                                            {checkbox(check.scm_gc_status === 'Normal' || check.status === 'Normal')} Normal &nbsp;&nbsp;
-                                            {checkbox(check.scm_gc_status === 'Abnormal' || check.status === 'Abnormal')} Abnormal
-                                        </td>
-                                        <td className="label-cell" style={{ width: '20%' }}>
-                                            <span style={{ borderBottom: '1px solid #666' }}>
-                                                {check.scm_gc_remarks || '\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0'}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+
+                        <div className="section-header" style={{ padding: '10px' }}>2. General check.
+                            <table style={{ paddingLeft: '6px' }}>
+                                <tbody>
+                                    {data?.generalChecks?.map((check, idx) => (
+                                        <tr key={idx}>
+                                            <td className="label-cell" style={{ width: '50%' }}>
+                                                2.{idx + 1} {displayValue(check.scm_gc_check_item || check.check_item)}
+                                            </td>
+                                            <td className="label-cell" style={{ width: '30%' }}>
+                                                {checkbox(check.scm_gc_status === 'Normal' || check.status === 'Normal')} Normal &nbsp;&nbsp;
+                                                {checkbox(check.scm_gc_status === 'Abnormal' || check.status === 'Abnormal')} Abnormal
+                                            </td>
+                                            <td className="label-cell" style={{ width: '20%' }}>
+                                                <span style={{
+                                                    borderBottom: '1px solid #666',
+                                                    display: 'inline-block',
+                                                    width: '100px',
+                                                    textAlign: 'left'
+                                                }}>
+                                                    {displayValue(check.scm_gc_remarks)}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
                     {/* Right column */}
-                    <div style={{ width: '200px', flexShrink: 0, paddingLeft: '10px' }}>
-                        <div className="section-header">General Picture/Connection diagram</div>
+                    <div style={{
+                        width: '250px', flexShrink: 0, padding: '10px'
+                    }}>
+                        <div className="section-header" style={{ textAlign: 'center' }}>General Picture/Connection diagram</div>
                         <div style={{
                             border: '1px solid #000',
                             height: '180px',
@@ -534,7 +581,7 @@ function SCMInspectionForm({ data, inspNo }) {
                                 <img
                                     src={`${apiHost}${headerImage.image_path}`}
                                     alt="Connection diagram"
-                                    style={{ maxWidth: '90%', maxHeight: '90%', objectFit: 'contain' }}
+                                    style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
                                     onError={(e) => {
                                         e.target.style.display = 'none';
                                         e.target.parentElement.innerHTML = '<span style="font-size: 8pt; color: #999;">Image not found</span>';
@@ -571,49 +618,49 @@ function SCMInspectionForm({ data, inspNo }) {
                         <table className="excel-table" style={{ marginBottom: '3px' }}>
                             <thead>
                                 <tr>
-                                    <th colSpan="8">Insulation Test</th>
+                                    <th colSpan="8">Insulation Test (MΩ)</th>
                                 </tr>
                                 <tr>
                                     <th rowSpan="2">Volt</th>
                                     <th rowSpan="2">Marking</th>
-                                    <th colSpan="2">1 min.</th>
-                                    <th colSpan="2">10 min.</th>
-                                    <th rowSpan="2">PI</th>
-                                    <th rowSpan="2">Winding<br />Temp</th>
+                                    <th colSpan="2" style={{ width: '100px' }}>1 min.</th>
+                                    <th colSpan="2" style={{ width: '100px' }}>10 min.</th>
+                                    <th rowSpan="2" style={{ width: '50px' }}>PI</th>
+                                    <th rowSpan="2" style={{ width: '50px' }}>Winding<br />Temp</th>
                                 </tr>
                                 <tr>
-                                    <th>C</th>
-                                    <th>40°C</th>
-                                    <th>C</th>
-                                    <th>40°C</th>
+                                    <th style={{ width: '50px' }}>C</th>
+                                    <th style={{ width: '50px' }}>40°C</th>
+                                    <th style={{ width: '50px' }}>C</th>
+                                    <th style={{ width: '50px' }}>40°C</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {data?.insulationTests?.map((test, idx) => (
                                     <tr key={idx}>
                                         <td className="value-cell" style={{ textAlign: 'center' }}>
-                                            {test.scm_it_test_voltage || test.test_voltage || '-'}
+                                            {displayValue(test.scm_it_test_voltage || test.test_voltage)}
                                         </td>
                                         <td className="value-cell" style={{ textAlign: 'center' }}>
-                                            {test.scm_it_phase_marking || test.phase_marking}
+                                            {displayValue(test.scm_it_phase_marking || test.phase_marking)}
                                         </td>
                                         <td className="value-cell" style={{ textAlign: 'center' }}>
-                                            {test.scm_it_resistance_1min_c || test.resistance_1min_c || '-'}
+                                            {displayValue(test.scm_it_resistance_1min_c || test.resistance_1min_c)}
                                         </td>
                                         <td className="value-cell" style={{ textAlign: 'center' }}>
-                                            {test.scm_it_resistance_1min_40c || test.resistance_1min_40c || '-'}
+                                            {displayValue(test.scm_it_resistance_1min_40c || test.resistance_1min_40c)}
                                         </td>
                                         <td className="value-cell" style={{ textAlign: 'center' }}>
-                                            {test.scm_it_resistance_10min_c || test.resistance_10min_c || '-'}
+                                            {displayValue(test.scm_it_resistance_10min_c || test.resistance_10min_c)}
                                         </td>
                                         <td className="value-cell" style={{ textAlign: 'center' }}>
-                                            {test.scm_it_resistance_10min_40c || test.resistance_10min_40c || '-'}
+                                            {displayValue(test.scm_it_resistance_10min_40c || test.resistance_10min_40c)}
                                         </td>
                                         <td className="value-cell" style={{ textAlign: 'center' }}>
-                                            {test.scm_it_polarization_index || test.polarization_index || '-'}
+                                            {displayValue(test.scm_it_polarization_index || test.polarization_index)}
                                         </td>
                                         <td className="value-cell" style={{ textAlign: 'center' }}>
-                                            {test.scm_it_winding_temp || test.winding_temp || '-'}
+                                            {displayValue(test.scm_it_winding_temp || test.winding_temp)}
                                         </td>
                                     </tr>
                                 ))}
@@ -639,10 +686,10 @@ function SCMInspectionForm({ data, inspNo }) {
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td className="label-cell">Resistance ({data?.scm_rt_test_unit || 'm'}Ω)</td>
-                                    <td className="value-cell" style={{ textAlign: 'center' }}>{data?.scm_rt_resistance_uv || ''}</td>
-                                    <td className="value-cell" style={{ textAlign: 'center' }}>{data?.scm_rt_resistance_uw || ''}</td>
-                                    <td className="value-cell" style={{ textAlign: 'center' }}>{data?.scm_rt_resistance_vw || ''}</td>
+                                    <td className="label-cell">Resistance ({displayValue(data?.scm_rt_test_unit, 'm')}Ω)</td>
+                                    <td className="value-cell" style={{ textAlign: 'center' }}>{displayValue(data?.scm_rt_resistance_uv)}</td>
+                                    <td className="value-cell" style={{ textAlign: 'center' }}>{displayValue(data?.scm_rt_resistance_uw)}</td>
+                                    <td className="value-cell" style={{ textAlign: 'center' }}>{displayValue(data?.scm_rt_resistance_vw)}</td>
                                 </tr>
                                 <tr>
                                     <td colSpan="4" className="label-cell">
@@ -667,10 +714,10 @@ function SCMInspectionForm({ data, inspNo }) {
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td className="label-cell">Inductance ({data?.scm_lt_test_unit || 'm'}H)</td>
-                                    <td className="value-cell" style={{ textAlign: 'center' }}>{data?.scm_lt_inductance_uv || ''}</td>
-                                    <td className="value-cell" style={{ textAlign: 'center' }}>{data?.scm_lt_inductance_uw || ''}</td>
-                                    <td className="value-cell" style={{ textAlign: 'center' }}>{data?.scm_lt_inductance_vw || ''}</td>
+                                    <td className="label-cell">Inductance ({displayValue(data?.scm_lt_test_unit, 'm')}H)</td>
+                                    <td className="value-cell" style={{ textAlign: 'center' }}>{displayValue(data?.scm_lt_inductance_uv)}</td>
+                                    <td className="value-cell" style={{ textAlign: 'center' }}>{displayValue(data?.scm_lt_inductance_uw)}</td>
+                                    <td className="value-cell" style={{ textAlign: 'center' }}>{displayValue(data?.scm_lt_inductance_vw)}</td>
                                 </tr>
                                 <tr>
                                     <td colSpan="4" className="label-cell">
@@ -719,29 +766,44 @@ function SCMInspectionForm({ data, inspNo }) {
                     <tbody>
                         <tr>
                             <td className="label-cell">CONNECTION No.</td>
-                            <td className="value-cell" align="center">{data?.scm_tsb_de_connection_no1 || ''}</td>
-                            <td className="value-cell" align="center">{data?.scm_tsb_de_connection_no2 || ''}</td>
-                            <td className="value-cell" align="center">{data?.scm_tsb_nde_connection_no1 || ''}</td>
-                            <td className="value-cell" align="center">{data?.scm_tsb_nde_connection_no2 || ''}</td>
-                            <td className="value-cell" rowSpan={2} align="center">{data?.scm_tsb_sensor_type || ''}</td>
+                            <td className="value-cell" align="center">{displayValue(data?.scm_tsb_de_connection_no1)}</td>
+                            <td className="value-cell" align="center">{displayValue(data?.scm_tsb_de_connection_no2)}</td>
+                            <td className="value-cell" align="center">{displayValue(data?.scm_tsb_nde_connection_no1)}</td>
+                            <td className="value-cell" align="center">{displayValue(data?.scm_tsb_nde_connection_no2)}</td>
+                            <td className="value-cell" rowSpan={2} align="center">{displayValue(data?.scm_tsb_sensor_type)}</td>
                             <td className="label-cell">CONNECTION No.</td>
-                            <td className="value-cell" align="center">{data?.heaters?.[0]?.scm_h_connection_no1 || data?.heaters?.[0]?.connection_no1 || ''}</td>
-                            <td className="value-cell" align="center">{data?.heaters?.[0]?.scm_h_connection_no2 || data?.heaters?.[0]?.connection_no2 || ''}</td>
-                            <td className="value-cell" align="center">{data?.heaters?.[1]?.scm_h_connection_no1 || data?.heaters?.[1]?.connection_no1 || ''}</td>
-                            <td className="value-cell" align="center">{data?.heaters?.[1]?.scm_h_connection_no2 || data?.heaters?.[1]?.connection_no2 || ''}</td>
+                            <td className="value-cell" align="center">{displayValue(data?.heaters?.[0]?.scm_h_connection_no1 || data?.heaters?.[0]?.connection_no1)}</td>
+                            <td className="value-cell" align="center">{displayValue(data?.heaters?.[0]?.scm_h_connection_no2 || data?.heaters?.[0]?.connection_no2)}</td>
+                            <td className="value-cell" align="center">{displayValue(data?.heaters?.[1]?.scm_h_connection_no1 || data?.heaters?.[1]?.connection_no1)}</td>
+                            <td className="value-cell" align="center">{displayValue(data?.heaters?.[1]?.scm_h_connection_no2 || data?.heaters?.[1]?.connection_no2)}</td>
                         </tr>
                         <tr>
                             <td className="label-cell">RESISTANCE (Ω)</td>
-                            <td className="value-cell" colSpan={2} align="center">{data?.scm_tsb_de_resistance || ''}</td>
-                            <td className="value-cell" colSpan={2} align="center">{data?.scm_tsb_nde_resistance || ''}</td>
+                            <td className="value-cell" colSpan={2} align="center">{displayValue(data?.scm_tsb_de_resistance)}</td>
+                            <td className="value-cell" colSpan={2} align="center">{displayValue(data?.scm_tsb_nde_resistance)}</td>
                             <td className="label-cell">RESISTANCE (Ω)</td>
-                            <td className="value-cell" colSpan={2} align="center">{data?.heaters?.[0]?.scm_h_resistance || data?.heaters?.[0]?.resistance || ''}</td>
-                            <td className="value-cell" colSpan={2} align="center">{data?.heaters?.[1]?.scm_h_resistance || data?.heaters?.[1]?.resistance || ''}</td>
+                            <td className="value-cell" colSpan={2} align="center">{displayValue(data?.heaters?.[0]?.scm_h_resistance || data?.heaters?.[0]?.resistance)}</td>
+                            <td className="value-cell" colSpan={2} align="center">{displayValue(data?.heaters?.[1]?.scm_h_resistance || data?.heaters?.[1]?.resistance)}</td>
                         </tr>
                     </tbody>
                 </table>
-
-                <table className="excel-table" style={{ marginBottom: '5px' }}>
+                <table className="excel-table" style={{ marginBottom: '5px', width: '100%', borderCollapse: 'collapse' }}>
+                    <colgroup>
+                        <col style={{ width: '250px' }} />
+                        <col style={{ width: '60px' }} />
+                        <col style={{ width: '60px' }} />
+                        <col style={{ width: '60px' }} />
+                        <col style={{ width: '60px' }} />
+                        <col style={{ width: '60px' }} />
+                        <col style={{ width: '60px' }} />
+                        <col style={{ width: '60px' }} />
+                        <col style={{ width: '60px' }} />
+                        <col style={{ width: '60px' }} />
+                        <col style={{ width: '60px' }} />
+                        <col style={{ width: '60px' }} />
+                        <col style={{ width: '60px' }} />
+                        <col style={{ width: '100px' }} />
+                    </colgroup>
                     <thead>
                         <tr>
                             <th colSpan="14" className="header-cell">TEMPERATURE SENSOR (STATOR)</th>
@@ -759,17 +821,23 @@ function SCMInspectionForm({ data, inspNo }) {
                             <td className="label-cell">CONNECTION No.</td>
                             {data?.tempSensorsStator?.map((sensor, idx) => (
                                 <React.Fragment key={idx}>
-                                    <td className="value-cell" align='center'>{sensor.scm_tss_connection_no1 || sensor.connection_no1 || ''}</td>
-                                    <td className="value-cell" align='center'>{sensor.scm_tss_connection_no2 || sensor.connection_no2 || ''}</td>
+                                    <td className="value-cell" align='center'>
+                                        {displayValue(sensor.scm_tss_connection_no1 || sensor.connection_no1)}
+                                    </td>
+                                    <td className="value-cell" align='center'>
+                                        {displayValue(sensor.scm_tss_connection_no2 || sensor.connection_no2)}
+                                    </td>
                                 </React.Fragment>
                             ))}
-                            <td className="value-cell" rowSpan="2" align='center'>{data?.tempSensorsStator?.[0]?.scm_tss_sensor_type || data?.tempSensorsStator?.[0]?.sensor_type || ''}</td>
+                            <td className="value-cell" rowSpan="2" align='center'>
+                                {displayValue(data?.tempSensorsStator?.[0]?.scm_tss_sensor_type || data?.tempSensorsStator?.[0]?.sensor_type)}
+                            </td>
                         </tr>
                         <tr>
                             <td className="label-cell">RESISTANCE (Ω)</td>
                             {data?.tempSensorsStator?.map((sensor, idx) => (
                                 <td key={idx} className="value-cell" colSpan={2} align='center'>
-                                    {sensor.scm_tss_resistance || sensor.resistance || ''}
+                                    {displayValue(sensor.scm_tss_resistance || sensor.resistance)}
                                 </td>
                             ))}
                         </tr>
@@ -793,8 +861,7 @@ function SCMInspectionForm({ data, inspNo }) {
                             fontSize: '8pt',
                             marginBottom: '8px'
                         }}>
-                        Conclusion:
-                        {data?.conclusion || ''}
+                        Conclusion: {displayValue(data?.conclusion)}
                     </div>
                     <div
                         style={{
@@ -804,9 +871,7 @@ function SCMInspectionForm({ data, inspNo }) {
                             fontSize: '8pt',
                             marginBottom: '8px'
                         }}>
-                        Recommendation:
-                        {data?.recommendation || ''}
-
+                        Recommendation: {displayValue(data?.recommendation)}
                     </div>
                 </div>
             </div>
@@ -840,7 +905,7 @@ function SCMInspectionForm({ data, inspNo }) {
                                         fontSize: '24pt',
                                         fontWeight: 'bold'
                                     }}>
-                                        {data?.overall_status || 'N'}
+                                        {displayValue(data?.overall_status, 'N')}
                                     </span>
                                 </div>
                             </td>
@@ -884,13 +949,13 @@ function SCMInspectionForm({ data, inspNo }) {
                                             <span style={{ fontWeight: '600' }}>Company:</span> U-SERVICES (THAILAND) CO.,LTD.
                                         </div>
                                         <div style={{ marginTop: '8px' }}>
-                                            <span style={{ fontWeight: '600' }}>Date:</span> {formatDate(data?.inspection_completed_date) || '-'}
+                                            <span style={{ fontWeight: '600' }}>Date:</span> {formatDate(data?.inspection_completed_date)}
                                         </div>
                                     </div>
 
                                     <div style={{ flex: 1 }}>
                                         <div style={{ marginBottom: '5px' }}>
-                                            <span style={{ fontWeight: '600' }}>Name-Surname:</span> {data?.inspector_name || '-'}
+                                            <span style={{ fontWeight: '600' }}>Name-Surname:</span> {displayValue(data?.inspector_name)}
                                         </div>
                                         <div style={{ marginTop: '8px', display: "flex" }}>
                                             <div style={{ fontWeight: '600', marginRight: '5px' }}>Signature:</div>
@@ -949,11 +1014,11 @@ function SCMInspectionForm({ data, inspNo }) {
                     PM-FM-RY-009 Rev.01
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
 
-function SCMBeforeAfterImagesPage({ inspNo }) {
+function SCMBeforeAfterImagesPage({ inspNo, dataTag }) {
     const [loading, setLoading] = useState(true);
     const [images, setImages] = useState([]);
 
@@ -1005,8 +1070,8 @@ function SCMBeforeAfterImagesPage({ inspNo }) {
         return null;
     }
 
-    // แบ่งรูปภาพเป็นหน้า ๆ ละ 9 รูป
-    const imagesPerPage = 9;
+    // แบ่งรูปภาพเป็นหน้า ๆ ละ 6 รูป
+    const imagesPerPage = 6;
     const pages = [];
     for (let i = 0; i < images.length; i += imagesPerPage) {
         pages.push(images.slice(i, i + imagesPerPage));
@@ -1021,7 +1086,6 @@ function SCMBeforeAfterImagesPage({ inspNo }) {
                     style={{
                         width: '210mm',
                         height: '297mm',
-                        padding: '8mm',
                         backgroundColor: 'white',
                         fontFamily: 'Arial, sans-serif',
                         fontSize: '9pt',
@@ -1045,7 +1109,7 @@ function SCMBeforeAfterImagesPage({ inspNo }) {
                         .image-grid {
                             display: grid;
                             grid-template-columns: repeat(2, 1fr);
-                            grid-template-rows: repeat(2, 1fr);
+                            grid-template-rows: repeat(3, 1fr);
                             gap: 8px;
                             flex: 1;
                             min-height: 0;
@@ -1067,14 +1131,19 @@ function SCMBeforeAfterImagesPage({ inspNo }) {
                             position: relative;
                             overflow: hidden;
                             min-height: 0;
+                            width: 100%;
+                            aspect-ratio: 1 / 1;
                         }
                         .image-box img {
                             max-width: 100%;
                             max-height: 100%;
+                            width: auto;
+                            height: auto;
                             object-fit: contain;
+                            display: block;
                         }
                         .image-number {
-                            font-size: 7pt;
+                            font-size: 12pt;
                             color: #666;
                             text-align: center;
                             padding: 2px 0;
@@ -1089,6 +1158,7 @@ function SCMBeforeAfterImagesPage({ inspNo }) {
                         marginBottom: '8px',
                         paddingBottom: '4px',
                         borderBottom: '2px solid #000',
+                        padding: '8mm',
                         flexShrink: 0
                     }}>
                         <img src="/img/U-LOGO.png" alt="" style={{ width: '80px', marginRight: '20px' }} />
@@ -1098,7 +1168,6 @@ function SCMBeforeAfterImagesPage({ inspNo }) {
                             </h1>
                         </div>
                     </div>
-
                     {/* Title */}
                     <div style={{ flexShrink: 0 }}>
                         <h2 style={{
@@ -1112,7 +1181,7 @@ function SCMBeforeAfterImagesPage({ inspNo }) {
                     </div>
 
                     {/* Images Grid */}
-                    <div className="image-grid">
+                    <div className="image-grid" style={{ padding: '8mm', }}>
                         {pageImages.map((image, idx) => {
                             const globalIndex = pageIndex * imagesPerPage + idx + 1;
                             const imageUrl = image.image_path
@@ -1121,14 +1190,6 @@ function SCMBeforeAfterImagesPage({ inspNo }) {
 
                             return (
                                 <div key={image.id || idx} className="image-item">
-                                    <div className="image-number">
-                                        {/* Image {globalIndex} */}
-                                        {image.img_description ? (
-                                            image.img_description
-                                        ) : (
-                                            `Image ${globalIndex}`
-                                        )}
-                                    </div>
                                     <div className="image-box">
                                         {imageUrl ? (
                                             <img
@@ -1152,6 +1213,10 @@ function SCMBeforeAfterImagesPage({ inspNo }) {
                                             </span>
                                         )}
                                     </div>
+                                    <div className="image-number">
+                                        {/* Image {globalIndex} */}
+                                        {displayValue(image.img_description, `Photo ${globalIndex}`)}
+                                    </div>
                                 </div>
                             );
                         })}
@@ -1159,16 +1224,17 @@ function SCMBeforeAfterImagesPage({ inspNo }) {
 
                     {/* Footer */}
                     <div style={{
-                        borderTop: '1px solid #666',
+                        borderTop: '2px solid #0c0a0aff',
                         paddingTop: '4px',
                         marginTop: '6px',
                         fontSize: '7pt',
                         color: '#666',
                         display: 'flex',
+                        padding: '8mm',
                         justifyContent: 'space-between',
                         flexShrink: 0
                     }}>
-                        <div>Document No: {inspNo || ''}</div>
+                        <div>Tag No: {dataTag || '-'}</div>
                         <div>
                             Page {pageIndex + 2} - {new Date().toLocaleDateString('th-TH', {
                                 year: 'numeric',

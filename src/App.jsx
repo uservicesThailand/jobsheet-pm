@@ -12,6 +12,10 @@ import InspectionDetail from './pages/InspectionDetail';
 import FormList from './pages/FormList';
 import PrintInspectionReport from './pages/PrintInspectionReport';
 import FormNumberInput from './pages/FormNumberInput';
+import FullCalendar from './pages/FullCalendar';
+import AdminUserManager from './pages/AdminUserManager';
+import ProfileSetting from './components/ProfileSetting';
+
 function App() {
   // ---- auth state
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -50,7 +54,11 @@ function App() {
     { path: 'inspection/:id', element: <InspectionDetail /> },
     { path: 'formNumberInput/:id', element: <FormNumberInput /> },
     { path: 'FormList', element: <FormList /> },
-    { path: "print/:inspNo", element: <PrintInspectionReport /> }
+    { path: "print/:inspNo", element: <PrintInspectionReport /> },
+    { path: "fullCalendar", element: <FullCalendar /> },
+    { path: "user/manager", element: <AdminUserManager /> },
+    { path: "profile-setting", element: <ProfileSetting /> }
+
   ];
 
   return (
